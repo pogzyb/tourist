@@ -1,0 +1,19 @@
+FROM amazonlinux:2023
+
+# install SAM
+RUN yum update && yum install -y wget unzip git zip \
+  && mkdir sam-installation \
+  && wget https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip \
+  && unzip aws-sam-cli-linux-x86_64.zip -d sam-installation \
+  && ./sam-installation/install \
+  && sam --version
+
+# install TF
+RUN yum install -y yum-utils \
+  && yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo \
+  && yum -y install terraform
+
+# install docker
+RUN yum install -y docker
+
+WORKDIR /build

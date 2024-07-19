@@ -1,0 +1,23 @@
+services:
+  tourist:
+    build:
+      context: .
+      dockerfile: Dockerfile.main
+    container_name: tourist
+    hostname: tourist
+    ports:
+      - 8000:8000
+
+  sam-deploy:
+    build:
+      dockerfile: Dockerfile.sam
+    container_name: sam-deploy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # docker
+      - ./terraform/aws:/build/aws  # terraform code
+      - ./data/tf:/build/tf  # statefile!
+    env_file:
+      - .env.aws
+    environment:
+      - SAM_CLI_TELEMETRY=0
+    entrypoint: sleep 8h
