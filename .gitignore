@@ -1,0 +1,8 @@
+__pycache__/
+dist/
+data/
+.terraform/
+.scratch/
+.env*
+*.hcl
+scratch/
