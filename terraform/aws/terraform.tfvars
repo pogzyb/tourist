@@ -1,0 +1,6 @@
+api_name           = "tourist"
+env                = "main"
+image_tag          = "0.1.0"
+auth_function_name = "tourist-auth"
+app_function_name  = "tourist-app"
+ecr_repo_name      = "tourist"
