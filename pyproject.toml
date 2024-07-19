@@ -1,0 +1,40 @@
+[project]
+name = "tourist"
+authors = [
+  { name="Joe Obarzanek", email="pogzyb@umich.edu" },
+]
+description = "Tourist Framework"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dynamic = ["version"]
+license = {text = "MIT License"}
+dependencies = [ "httpx>=0.23.0" ]
+
+[project.optional-dependencies]
+app = [
+  "fastapi",
+  "selenium==4.22.0",
+  "pydantic==2.8.0"
+]
+
+[project.scripts]
+tourist = "tourist.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/pogzyb/tourist"
+Issues = "https://github.com/pogzyb/tourist/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tourist"]
+
+[tool.hatch.version]
+path = "src/tourist/__init__.py"
