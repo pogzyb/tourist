@@ -13,6 +13,7 @@ resource "aws_apigatewayv2_api" "api" {
   }
 }
 
+# TODO/contribution: Optional domain name and ACM certificate
 # resource "aws_apigatewayv2_domain_name" "domain" {
 #   domain_name = var.domain_name
 
@@ -95,4 +96,3 @@ resource "aws_apigatewayv2_integration" "app_integration" {
   credentials_arn        = aws_iam_role.apigw_role.arn
   payload_format_version = "2.0"
 }
-##

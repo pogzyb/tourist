@@ -7,13 +7,15 @@ module "app_lambda" {
   lambda_role                       = aws_iam_role.lambda_role.arn
   create_package                    = false
   create_role                       = false
-  image_uri                         = module.docker_image_in_ecr.image_uri
+  image_uri                         = "${module.ecr.repository_url}:${var.image_tag}"
   package_type                      = "Image"
   architectures                     = ["x86_64"]
   timeout                           = 30
   create_sam_metadata               = true
   cloudwatch_logs_retention_in_days = 5
-  memory_size                       = 3008
+  memory_size                       = 4096
+
+  depends_on = [ null_resource.push_image_to_ecr ]
 }
 
 module "auth_lambda" {
@@ -29,7 +31,7 @@ module "auth_lambda" {
   handler                           = "auth.lambda_handler"
   runtime                           = "python3.12"
   create_package                    = false
-  local_existing_package            = "auth.zip"
+  local_existing_package            = "./scripts/auth.zip"
   ignore_source_code_hash           = false
   cloudwatch_logs_retention_in_days = 5
   environment_variables             = { "X_SECRET_VALUE" = "supersecret" }

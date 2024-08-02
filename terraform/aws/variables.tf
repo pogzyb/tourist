@@ -6,6 +6,7 @@ variable "env" {
   type = string
 }
 
+# TODO/Contribution: modularize and add domain name.
 variable "domain_name" {
   type    = string
   default = ""
@@ -24,5 +25,17 @@ variable "ecr_repo_name" {
 }
 
 variable "image_tag" {
+  type = string
+}
+
+variable "push_image_to_ecr" {
+  type = bool
+}
+
+variable "region" {
+  type = string
+}
+
+variable "statefile_path" {
   type = string
 }

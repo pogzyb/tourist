@@ -14,7 +14,7 @@ provider "docker" {
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region = var.region
 
   default_tags {
     tags = {
@@ -26,8 +26,9 @@ provider "aws" {
 
 terraform {
 
+  // TODO/Contribution: support dynamic options/s3 backend
   backend "local" {
-    path = "../tf/local.tfstate"
+    path = "../statefile/local.tfstate"
   }
 
   required_version = ">= 0.13.1"
