@@ -4,6 +4,7 @@ auth_function_name = "tourist-auth"
 app_function_name  = "tourist-app"
 ecr_repo_name      = "tourist"
 region = "us-east-1"
+auth_secret_value = "supersecret"
 
 # IMPORTANT: this is mounted into the container from a path on your machine.
 # Check the docker-compose.yml file.

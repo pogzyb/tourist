@@ -34,5 +34,5 @@ module "auth_lambda" {
   local_existing_package            = "./scripts/auth.zip"
   ignore_source_code_hash           = false
   cloudwatch_logs_retention_in_days = 5
-  environment_variables             = { "X_SECRET_VALUE" = "supersecret" }
+  environment_variables             = { "X_SECRET_VALUE" = var.auth_secret_value }
 }

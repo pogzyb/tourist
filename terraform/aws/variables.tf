@@ -39,3 +39,7 @@ variable "region" {
 variable "statefile_path" {
   type = string
 }
+
+variable "auth_secret_value" {
+  type = string
+}
