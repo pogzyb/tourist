@@ -1,0 +1,5 @@
+tourist
+langchain_aws
+langgraph
+python-dotenv
+beautifulsoup4
