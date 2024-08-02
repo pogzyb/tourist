@@ -1,0 +1,29 @@
+name: Release
+
+on:
+    release:
+      types: [published]
+
+jobs:
+    pypi-publish:
+        uses: pogzyb/tourist/.github/workflows/pypi.yml@main
+        secrets:
+            pypi-token: ${{ secrets.PYPI_API_TOKEN }}
+    pause:
+        runs-on: ubuntu-latest
+        needs: pypi-publish
+        steps:
+            - name: Wait for PyPi index refresh
+              run: sleep 30s
+    ghcr-publish:
+        uses: pogzyb/tourist/.github/workflows/ghcr.yml@main
+        needs: [pypi-publish, pause]
+        with:
+            dockerfile: Dockerfile.main
+            username: ${{ github.actor }}
+            image-name: ${{ github.repository }}
+            image-tag: ${{ github.event.release.tag_name }}
+            revision: ${{ github.sha }}
+            created: ${{ github.event.release.created_at }}
+        secrets:
+            gh-token: ${{ secrets.GITHUB_TOKEN }}
