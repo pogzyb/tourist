@@ -1,39 +1,49 @@
+import logging
+
 from fastapi import APIRouter, HTTPException
 
 from tourist.app.base import BaseResponse, BaseRequest
 from tourist.core import get_page, get_page_with_actions
 
 tour = APIRouter(prefix="/tour", redirect_slashes=True, tags=["Tour"])
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
-class TourRequest(BaseRequest):
-    target_url: str | None = None
+class TouristViewRequest(BaseRequest):
+    target_url: str
     warmup_url: str | None = None
     cookies: list | None = None
-    include_b64_png: bool | None = False
+    screenshot: bool | None = False
 
 
-class TourActionsRequest(BaseRequest):
-    actions: str | None = None
+class TouristActionsRequest(BaseRequest):
+    actions: str
 
 
-class TourResponse(BaseResponse):
+class TouristViewResponse(BaseResponse):
     current_url: str | None = None
     cookies: list | None = None
     source_html: str
-    b64_png: str | None = None
+    b64_screenshot: str | None = None
 
 
 class TouristActionsResponse(BaseResponse): ...
 
 
-@tour.post("/page", response_model=TourResponse)
-def view_page(tourist_request: TourRequest):
-    page = get_page(**tourist_request.dict())
-    return page or HTTPException(status_code=400, detail="something went wrong")
+@tour.post("/view", response_model=TouristViewResponse)
+def view_page(tourist_view_request: TouristViewRequest):
+    page = get_page(**tourist_view_request.model_dump())
+    if not page:
+        raise HTTPException(status_code=400, detail="something went wrong")
+    else:
+        return page
 
 
 @tour.post("/actions")
-def do_actions(tourist_actions_request: TourActionsRequest):
-    page = get_page_with_actions(**tourist_actions_request.dict())
-    return page or HTTPException(status_code=400, detail="something went wrong")
+def do_actions(tourist_actions_request: TouristActionsRequest):
+    page = get_page_with_actions(**tourist_actions_request.model_dump())
+    if not page:
+        raise HTTPException(status_code=400, detail="something went wrong")
+    else:
+        return page

@@ -1,7 +1,27 @@
-import json
+import logging
+import time
+from functools import wraps
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
-def to_single_line(script: str, as_json: bool = True) -> str:
-    single_line = repr(script)[1:-1]
-    single_line = json.dumps(single_line) if as_json else single_line
-    return single_line.replace('"', r"\"").replace("'", r"\"")
+def retry(n: int = 1):
+    def do(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for attempt in range(n + 1):
+                try:
+                    result = func(*args, **kwargs)
+                    return result
+                except:
+                    logger.exception(f"{func.__name__} error on attempt={attempt}")
+                    # TODO/Contribution: this may not help
+                    time.sleep(0.5)
+
+            # return None after all attempts
+            return None
+
+        return wrapper
+
+    return do
