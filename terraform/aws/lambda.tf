@@ -15,7 +15,7 @@ module "app_lambda" {
   cloudwatch_logs_retention_in_days = 5
   memory_size                       = 4096
 
-  depends_on = [ null_resource.push_image_to_ecr ]
+  depends_on = [null_resource.push_image_to_ecr]
 }
 
 module "auth_lambda" {

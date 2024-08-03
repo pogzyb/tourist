@@ -1,7 +1,7 @@
 module "ecr" {
-  source = "terraform-aws-modules/ecr/aws"
-  repository_type = "private"
-  repository_name = "tourist"
+  source                  = "terraform-aws-modules/ecr/aws"
+  repository_type         = "private"
+  repository_name         = "tourist"
   repository_force_delete = true
   repository_read_write_access_arns = [
     data.aws_caller_identity.current.arn
@@ -31,13 +31,13 @@ module "ecr" {
 resource "null_resource" "push_image_to_ecr" {
   provisioner "local-exec" {
     command = "/bin/bash ./scripts/ecr-push-image.sh"
-    when = create
+    when    = create
     environment = {
-      ACCOUNT_ID = data.aws_caller_identity.current.account_id
-      REGION = "us-east-1"
-      REPO_URL = module.ecr.repository_url
+      ACCOUNT_ID      = data.aws_caller_identity.current.account_id
+      REGION          = "us-east-1"
+      REPO_URL        = module.ecr.repository_url
       TOURIST_VERSION = var.image_tag
     }
   }
-  depends_on = [ module.ecr ]
+  depends_on = [module.ecr]
 }

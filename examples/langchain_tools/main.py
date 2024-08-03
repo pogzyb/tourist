@@ -15,7 +15,11 @@ from serp_tool import TouristSERPTool
 load_dotenv()
 
 # Assumes you're running locally, change this to your cloud endpoint if you've deployed.
-scraper = TouristScraper("http://localhost:8000", "", concurrency=1)
+scraper = TouristScraper(
+    "https://cpmfay2rw7.execute-api.us-east-1.amazonaws.com/main",
+    "supersecret",
+    concurrency=1,
+)
 search_tool = TouristSERPTool(scraper=scraper, max_results=3)
 scrape_tool = TouristScraperTool(scraper=scraper)
 
