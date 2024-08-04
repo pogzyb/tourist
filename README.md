@@ -14,19 +14,25 @@ An open-source, low-cost, serverless application for web scraping.
 
 #### Local (for testing.)
 
+Run the Tourist service on your local machine for testing or prototyping:
+
 0. Have docker
-1. `make tourist-local` - runs a docker container on your machine
+1. Clone this repo
+2. `make tourist-local` - runs a docker container on your machine
 
 Check the docs at `http://localhost:8000/docs`
 
 #### AWS (for real.)
 
-Setup your own instance of Tourist with one-command.
+Deploy your own instance of Tourist into AWS with Terraform.
 
-0. Have docker
-0. Have an AWS account with credentials copied to `.env.aws` in the root of this project
-1. `make tourist-iac-interactive`
-2. `terraform apply` - deploys the infratructure into your AWS account
+<b>IMPORTANT: Tourist uses serverless infrastructure to keep costs extremely low, however the costs will not be $0.</b>
+
+1. Have docker
+2. Have an AWS account with credentials copied to `.env.aws` in the root of this project
+3. Clone this repo
+4. `make tourist-iac-interactive`
+5. `terraform apply` - deploys the infratructure into your AWS account
 
 Use your endpoint: `https://<uuid>.execute-api.us-east-1.amazonaws.com/main` (available in terraform outputs)
 
@@ -37,6 +43,7 @@ Build your own LLM tools, web scraping apps, or automated testing frameworks wit
 #### Python
 
 You can use the python client to interact with your Tourist service.
+Check out the [examples](https://github.com/pogzyb/tourist/tree/main/examples) folder for the complete code.
 
 ```
 pip install tourist
@@ -51,7 +58,11 @@ from tourist.core import TouristScraper
 from langchain_core.tools import tool
 
 
-scraper = TouristScraper("http://localhost:8080", "no-secret")
+scraper = TouristScraper(
+    "http://localhost:8000", 
+    "no-secret", 
+    concurreny=1,
+)
 
 
 @tool
@@ -93,7 +104,7 @@ from pprint import pprint
 from tourist.core import TouristScraper
 
 
-scraper = TouristScraper("http://localhost:8080", "no-secret")
+scraper = TouristScraper("http://localhost:8000", "no-secret")
 
 my_selenium_code = """
 # `driver`, a selenium `webdriver.Chrome` object, is available in globals
