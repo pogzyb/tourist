@@ -10,9 +10,9 @@ An open-source, low-cost, serverless application for web scraping.
 
 ![tourist-architecture](./docs/touristv1.png "Overview")
 
-### Service
+## Service
 
-#### Local (for testing.)
+### Local (for testing...)
 
 Run the Tourist service on your local machine for testing or prototyping:
 
@@ -22,11 +22,11 @@ Run the Tourist service on your local machine for testing or prototyping:
 
 Check the docs at `http://localhost:8000/docs`
 
-#### AWS (for real.)
+### AWS (for real...)
 
 Deploy your own instance of Tourist into AWS with Terraform.
 
-<b>IMPORTANT: Tourist uses serverless infrastructure to keep costs extremely low, however the costs will not be $0.</b>
+<b>Tourist uses serverless infrastructure to keep costs extremely low, however the costs will not be $0.</b>
 
 1. Have docker
 2. Have an AWS account with credentials copied to `.env.aws` in the root of this project
@@ -36,7 +36,7 @@ Deploy your own instance of Tourist into AWS with Terraform.
 
 Use your endpoint: `https://<uuid>.execute-api.us-east-1.amazonaws.com/main` (available in terraform outputs)
 
-### Client
+## Client
 
 Build your own LLM tools, web scraping apps, or automated testing frameworks with Tourist.
 
@@ -120,11 +120,13 @@ assert result["current_url"] == "https://www.example.com/"
 pprint(result["html"])
 
 ```
-### Contributions
+
+## Contributions
 
 This is an open-source project. Please consider adding improvements or features related to your specific use-case. Chances are someone else is also facing the issue or limitation. Some ready-to-do tasks can be found in the source code as `TODO/Contribution: ...`.
 
-### Credits
+
+## Credits
 
 Components of this repository were influenced by these projects! Check them out.
 
