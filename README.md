@@ -2,17 +2,21 @@
 
 [![PyPI version](https://badge.fury.io/py/tourist.svg)](https://badge.fury.io/py/tourist)
 
-An open-source, low-cost, serverless application for web scraping. 
+An open-source, low-cost, serverless application for SERP extraction and web scraping. 
 
+Work on your LLM projects without worrying about credits, subscriptions, or rate-limits. Tourist is a free alternative to many mainstream SERP and web scraping API services. Run Tourist on your machine or deploy it into your own AWS account.  
 
 > [!WARNING]  
 > Tourist is still in early development. Features and API's may change unexpectedly.
 
+## Overview
 ![tourist-architecture](./docs/touristv1.png "Overview")
+
+Tourist has both Service and Client components. The Service (HTTP API) handles requests from the Client (your app, agent, or scraper scripts). You're in control of both components, and so none of your data or traffic is ever harvested or stored by third parties.
 
 ## Service
 
-### Local (for testing...)
+### Local deployment (for testing...)
 
 Run the Tourist service on your local machine for testing or prototyping:
 
@@ -22,19 +26,19 @@ Run the Tourist service on your local machine for testing or prototyping:
 
 Check the docs at `http://localhost:8000/docs`
 
-### AWS (for real...)
+### AWS deployment (for real...)
 
 Deploy your own instance of Tourist into AWS with Terraform.
 
-<b>Tourist uses serverless infrastructure to keep costs extremely low, however the costs will not be $0.</b>
+<b>Tourist uses serverless infrastructure to keep costs extremely low, however these costs won't be $0.00</b>
 
 1. Have docker
-2. Have an AWS account with credentials copied to `.env.aws` in the root of this project
-3. Clone this repo
+2. Clone this repo
+3. Have an AWS account with credentials copied to `.env.aws` in the root of this project
 4. `make tourist-iac-interactive`
-5. `terraform apply` - deploys the infratructure into your AWS account
+5. `terraform apply` - deploys the infrastructure into your AWS account
 
-Use your endpoint: `https://<uuid>.execute-api.us-east-1.amazonaws.com/main` (available in terraform outputs)
+Use your endpoint: `https://<uuid>.execute-api.us-east-1.amazonaws.com/main` (available in Terraform outputs)
 
 ## Client
 
