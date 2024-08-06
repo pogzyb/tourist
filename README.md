@@ -12,14 +12,14 @@ Work on your LLM projects without worrying about credits, subscriptions, or rate
 ## Overview
 ![tourist-architecture](./docs/touristv1.png "Overview")
 
-Tourist has both Service and Client components. The Service (HTTP API) handles requests from the Client (your app, agent, or scraper scripts). You're in control of both components, and so none of your data or traffic is ever harvested or stored by third parties.
+Tourist has both Service and Client components. The Service (HTTP API) handles requests from the Client (your app, agent, or scraper scripts). You're in control of both components, and so none of your data is ever stored by third parties.
 
 ## Service
 
 ### Local deployment (for testing...)
 
 > [!TIP]  
-> It is recommended to use Docker for running Tourist locally due to the various dependencies required to do headless scraping.
+> It is recommended to use Docker for running Tourist locally due to the various dependencies required to do headless browsing.
 
 Run the Tourist service on your local machine for testing or prototyping:
 1. Have Docker installed
@@ -39,15 +39,15 @@ Deploy your own instance of Tourist into AWS with Terraform:
 
 Use your endpoint: `https://<uuid>.execute-api.us-east-1.amazonaws.com/main` (available in terraform outputs)
 
-> [!IMPORTANT]  
+> [!WARNING]  
 > Tourist uses serverless infrastructure to keep costs extremely low; however depending on how heavily you use your API, these costs will not be $0.00.
 
-> [!NOTE]  
+> [!IMPORTANT]  
 > Tourist uses the X-SECRET authorization header to protect your API, you should set this value in `terraform/aws/terraform.tfvars`
 
 ## Client
 
-Build your own LLM tools, web scraping apps, or automated testing frameworks with Tourist.
+Build your own LLM tools, web scraping apps, or automated testing workflows with the Tourist client.
 
 #### Python
 
