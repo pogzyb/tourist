@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from enum import Enum
 from urllib.parse import quote_plus
@@ -7,6 +8,9 @@ from httpx import AsyncClient, Client, HTTPError
 
 from tourist.core.driver import DEFAULT_USER_AGENT, DEFAULT_TIMEOUT, DEFAULT_WINDOW_SIZE
 from tourist.core.parse_utils import get_text, get_links_from_serp
+
+logger = logging.getLogger("tourist.client")
+logger.addHandler(logging.NullHandler())
 
 
 class EngineEnum(str, Enum):
@@ -51,7 +55,7 @@ class TouristScraper:
                 response.raise_for_status()
                 return response.json()
             except HTTPError as e:
-                return {"error": True, "detail": f"could not GET {e.request.url}"}
+                return {"error": True, "detail": f"There was an HTTPError: {e}"}
 
     def post(self, uri: str, body: dict = None, **httpx_kws):
         timeout = httpx_kws.pop("timeout", 30.0)
@@ -65,7 +69,7 @@ class TouristScraper:
                 response.raise_for_status()
                 return response.json()
             except HTTPError as e:
-                return {"error": True, "detail": f"could not GET {e.request.url}"}
+                return {"error": True, "detail": f"There was an HTTPError: {e}"}
 
     async def aget_page(
         self,
@@ -147,10 +151,11 @@ class TouristScraper:
         }
         return self.post(uri, payload, **httpx_kws)
 
+    # TODO/Contribution: open to re-works of this function + error checking.
     def get_serp(
         self,
         query: str,
-        max_results: int = 10,
+        max_results: int = 5,
         engine: EngineEnum = EngineEnum.GOOGLE,
         **httpx_kws,
     ) -> list[dict]:
@@ -161,10 +166,12 @@ class TouristScraper:
         pages = []
         if source_html := page.get("source_html"):
             links = get_links_from_serp(source_html, engine)
+            logger.debug(f"Found {len(links)} relevant links on SERP")
+            # retrieve links in separate threads
             with ThreadPoolExecutor(max_workers=self.concurrency) as pool:
                 futures = {
-                    pool.submit(self.get_page, link): link
-                    for link in links[:max_results]
+                    pool.submit(self.get_page, link, **httpx_kws): link
+                    for link in links
                 }
                 for f in as_completed(futures):
                     try:
@@ -175,14 +182,22 @@ class TouristScraper:
                                 "content": get_text(page["source_html"]),
                             }
                             pages.append(page_data)
+                            # once we have enough results, break
+                            if len(pages) >= max_results:
+                                break
                     except:
                         ...
+                # shutdown the threadpool and cancel pending work
+                pool.shutdown(wait=False, cancel_futures=True)
+        # return serp content
+        logger.debug(f"Extracted {len(pages)} of information from SERP")
         return pages
 
+    # TODO/Contribution: open to re-works of this function + error checking.
     async def aget_serp(
         self,
         query: str,
-        max_results: int = 10,
+        max_results: int = 5,
         engine: EngineEnum = EngineEnum.GOOGLE,
         **httpx_kws,
     ) -> list[dict]:
@@ -193,9 +208,10 @@ class TouristScraper:
         pages = []
         if source_html := page.get("source_html"):
             links = get_links_from_serp(source_html, engine)
+            logger.debug(f"Found {len(links)} relevant links on SERP")
             tasks = {
                 asyncio.create_task(self.aget_page(link, **httpx_kws)): link
-                for link in links[:max_results]
+                for link in links
             }
             for task in asyncio.as_completed(tasks):
                 try:
@@ -206,6 +222,12 @@ class TouristScraper:
                             "content": get_text(page["source_html"]),
                         }
                         pages.append(page_data)
+                        if len(pages) >= max_results:
+                            break
                 except:
                     ...
+        # clean up coroutines
+        tasks = [task.cancel() for task in tasks]
+        # return serp content
+        logger.debug(f"Extracted {len(pages)} pages of information from SERP")
         return pages

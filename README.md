@@ -6,7 +6,7 @@ An open-source, low-cost, serverless application for SERP extraction and web scr
 
 Work on your LLM projects without worrying about credits, subscriptions, or rate-limits. Tourist is a free alternative to many mainstream SERP and web scraping API services. Run Tourist on your machine or deploy it into your own AWS account.  
 
-> [!WARNING]  
+> [!IMPORTANT]  
 > Tourist is still in early development. Features and API's may change unexpectedly.
 
 ## Overview
@@ -18,27 +18,32 @@ Tourist has both Service and Client components. The Service (HTTP API) handles r
 
 ### Local deployment (for testing...)
 
-Run the Tourist service on your local machine for testing or prototyping:
+> [!TIP]  
+> It is recommended to use Docker for running Tourist locally due to the various dependencies required to do headless scraping.
 
-0. Have docker
-1. Clone this repo
-2. `make tourist-local` - runs a docker container on your machine
+Run the Tourist service on your local machine for testing or prototyping:
+1. Have Docker installed
+2. Clone this repo
+3. `make tourist-local` - builds and runs the container on your machine
 
 Check the docs at `http://localhost:8000/docs`
 
 ### AWS deployment (for real...)
 
-Deploy your own instance of Tourist into AWS with Terraform.
-
-<b>Tourist uses serverless infrastructure to keep costs extremely low, however these costs won't be $0.00</b>
-
-1. Have docker
+Deploy your own instance of Tourist into AWS with Terraform:
+1. Have Docker installed
 2. Clone this repo
 3. Have an AWS account with credentials copied to `.env.aws` in the root of this project
 4. `make tourist-iac-interactive`
 5. `terraform apply` - deploys the infrastructure into your AWS account
 
-Use your endpoint: `https://<uuid>.execute-api.us-east-1.amazonaws.com/main` (available in Terraform outputs)
+Use your endpoint: `https://<uuid>.execute-api.us-east-1.amazonaws.com/main` (available in terraform outputs)
+
+> [!IMPORTANT]  
+> Tourist uses serverless infrastructure to keep costs extremely low; however depending on how heavily you use your API, these costs will not be $0.00.
+
+> [!NOTE]  
+> Tourist uses the X-SECRET authorization header to protect your API, you should set this value in `terraform/aws/terraform.tfvars`
 
 ## Client
 
@@ -61,11 +66,12 @@ from bs4 import BeautifulSoup as bs
 from tourist.core import TouristScraper
 from langchain_core.tools import tool
 
-
+# Assumes you're running locally,
+# change this to your cloud endpoint if you've deployed via terraform.
 scraper = TouristScraper(
-    "http://localhost:8000", 
-    "no-secret", 
-    concurreny=1,
+    "http://localhost:8000",
+    secret="doesntmatterlocally",  # authorization secret  
+    concurrency=1,  # control concurrent searches/scrapes
 )
 
 

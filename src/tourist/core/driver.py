@@ -18,8 +18,8 @@ DEFAULT_USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML,
 DEFAULT_TIMEOUT = 15.0
 DEFAULT_WINDOW_SIZE = (1920, 1080)
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger = logging.getLogger("tourist.driver")
+logger.addHandler(logging.NullHandler())
 
 
 class Page(BaseModel):

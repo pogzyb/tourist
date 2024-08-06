@@ -1,4 +1,5 @@
 from typing import Annotated
+import logging
 
 from dotenv import load_dotenv
 from typing_extensions import TypedDict
@@ -11,14 +12,17 @@ from tourist.core import TouristScraper
 from scrape_tool import TouristScraperTool
 from serp_tool import TouristSERPTool
 
+logging.basicConfig()
+
 # Put your credentials in .env if you're using an LLM service
 load_dotenv()
 
-# Assumes you're running locally, change this to your cloud endpoint if you've deployed.
+# Assumes you're running locally,
+# change this to your cloud endpoint if you've deployed via terraform.
 scraper = TouristScraper(
-    "https://cpmfay2rw7.execute-api.us-east-1.amazonaws.com/main",
+    "http://localhost:8000",
     "supersecret",
-    concurrency=1,
+    concurrency=1,  # control concurrent searches/scrapes
 )
 search_tool = TouristSERPTool(scraper=scraper, max_results=3)
 scrape_tool = TouristScraperTool(scraper=scraper)
@@ -39,7 +43,7 @@ class State(TypedDict):
 graph_builder = StateGraph(State)
 
 # IMPORTANT: please update the Chat model if you're using a different LLM.
-# TODO/Contribution: Add ChatOllama once it's supported.
+# TODO/Contribution: Add ChatOllama once it's supported in LangGraph.
 llm = ChatBedrock(
     model_id="anthropic.claude-3-sonnet-20240229-v1:0",
     model_kwargs=dict(temperature=0),

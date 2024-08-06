@@ -2,8 +2,8 @@ import logging
 import time
 from functools import wraps
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger = logging.getLogger("tourist.utils")
+logger.addHandler(logging.NullHandler())
 
 
 def retry(n: int = 1):
