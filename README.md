@@ -21,10 +21,17 @@ Tourist has both Service and Client components. The Service (HTTP API) handles r
 > [!TIP]  
 > It is recommended to use Docker for running Tourist locally due to the various dependencies required to do headless browsing.
 
-Run the Tourist service on your local machine for testing or prototyping:
 1. Have Docker installed
-2. Clone this repo
-3. `make tourist-local` - builds and runs the container on your machine
+2. `docker pull ghcr.io/pogzyb/tourist:latest`
+3. `docker run ghcr.io/pogzyb/tourist:latest`
+
+If the service came up correctly, you should see:
+```
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+```
 
 Check the docs at `http://localhost:8000/docs`
 
@@ -135,6 +142,11 @@ pprint(result["html"])
 
 This is an open-source project. Please consider adding improvements or features related to your specific use-case. Chances are someone else is also facing the issue or limitation. Some ready-to-do tasks can be found in the source code as `TODO/Contribution: ...`.
 
+To run the Tourist service on your local machine for testing or prototyping:
+1. Have Docker installed
+2. Clone this repo
+3. Add your contributions/modifications
+4. `make tourist-local` - build the container from source code in `src/`
 
 ## Credits
 
