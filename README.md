@@ -23,7 +23,7 @@ Tourist has both Service and Client components. The Service (HTTP API) handles r
 
 1. Have Docker installed
 2. `docker pull ghcr.io/pogzyb/tourist:latest`
-3. `docker run ghcr.io/pogzyb/tourist:latest`
+3. `docker run -p 8000:8000 ghcr.io/pogzyb/tourist:latest`
 
 If the service came up correctly, you should see:
 ```
