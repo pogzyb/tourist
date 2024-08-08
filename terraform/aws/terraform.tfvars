@@ -13,5 +13,5 @@ auth_secret_value = "supersecret"
 statefile_path = "../statefile/local.tfstate"
 
 # View latest tags here: https://github.com/pogzyb/tourist/releases
-image_tag         = "0.1.0"
+image_tag         = "latest"
 push_image_to_ecr = true
