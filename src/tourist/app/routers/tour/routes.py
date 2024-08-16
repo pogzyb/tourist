@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status
 
 from tourist.app.base import BaseResponse, BaseRequest
 from tourist.core import get_page, get_page_with_actions
@@ -33,17 +33,15 @@ class TouristActionsResponse(BaseResponse): ...
 
 @tour.post("/view", response_model=TouristViewResponse)
 def view_page(tourist_view_request: TouristViewRequest):
-    page = get_page(**tourist_view_request.model_dump())
-    if not page:
-        raise HTTPException(status_code=400, detail="something went wrong")
-    else:
+    if page := get_page(**tourist_view_request.model_dump()):
         return page
+    else:
+        raise HTTPException(status_code=400, detail="something went wrong")
 
 
 @tour.post("/actions")
 def do_actions(tourist_actions_request: TouristActionsRequest):
-    page = get_page_with_actions(**tourist_actions_request.model_dump())
-    if not page:
-        raise HTTPException(status_code=400, detail="something went wrong")
-    else:
+    if page := get_page_with_actions(**tourist_actions_request.model_dump()):
         return page
+    else:
+        raise HTTPException(status_code=status.HTTP_4, detail="something went wrong")
