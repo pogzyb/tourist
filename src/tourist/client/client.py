@@ -6,8 +6,8 @@ from urllib.parse import quote_plus
 
 from httpx import AsyncClient, Client, HTTPError
 
-from tourist.core.driver import DEFAULT_USER_AGENT, DEFAULT_TIMEOUT, DEFAULT_WINDOW_SIZE
-from tourist.core.parse_utils import get_text, get_links_from_serp
+from tourist.common import DEFAULT_USER_AGENT, DEFAULT_TIMEOUT, DEFAULT_WINDOW_SIZE
+from tourist.client.parse_utils import get_text, get_links_from_serp
 
 logger = logging.getLogger("tourist.client")
 logger.addHandler(logging.NullHandler())
@@ -82,7 +82,7 @@ class TouristScraper:
         window_size: tuple[int, int] = DEFAULT_WINDOW_SIZE,
         **httpx_kws,
     ) -> dict:
-        uri = self.version_prefix + "/tour/page"
+        uri = self.version_prefix + "/tour/view"
         payload = {
             "target_url": target_url,
             "warmup_url": warmup_url,

@@ -9,14 +9,15 @@ from pydantic import BaseModel
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
 
-from tourist.core.utils import retry
+from tourist.common import (
+    retry,
+    DEFAULT_USER_AGENT,
+    DEFAULT_TIMEOUT,
+    DEFAULT_WINDOW_SIZE,
+)
 
 CHROME_BIN = os.getenv("TOURIST__CHROME_BIN", "/tourist/browser/chrome")
 CHROME_DRIVER = os.getenv("TOURIST__CHROME_DRIVER", "/tourist/browser/chromedriver")
-
-DEFAULT_USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
-DEFAULT_TIMEOUT = 15.0
-DEFAULT_WINDOW_SIZE = (1920, 1080)
 
 logger = logging.getLogger("tourist.driver")
 logger.addHandler(logging.NullHandler())

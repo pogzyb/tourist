@@ -2,8 +2,13 @@ import logging
 import time
 from functools import wraps
 
-logger = logging.getLogger("tourist.utils")
+logger = logging.getLogger("tourist.common")
 logger.addHandler(logging.NullHandler())
+
+
+DEFAULT_USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+DEFAULT_TIMEOUT = 15.0
+DEFAULT_WINDOW_SIZE = (1920, 1080)
 
 
 def retry(n: int = 1):

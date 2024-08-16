@@ -3,7 +3,7 @@ import logging
 from fastapi import APIRouter, HTTPException, status
 
 from tourist.app.base import BaseResponse, BaseRequest
-from tourist.core import get_page, get_page_with_actions
+from tourist.service import get_page, get_page_with_actions
 
 tour = APIRouter(prefix="/tour", redirect_slashes=True, tags=["Tour"])
 logger = logging.getLogger()
