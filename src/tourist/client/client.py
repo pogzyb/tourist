@@ -161,7 +161,7 @@ class TouristScraper:
     ) -> list[dict]:
         assert engine == EngineEnum.GOOGLE, f"{engine} is not supported."
         page = self.get_page(
-            f"https://google.com/search?query={quote_plus(query)}", **httpx_kws
+            f"https://google.com/search?q={quote_plus(query)}", **httpx_kws
         )
         pages = []
         if source_html := page.get("source_html"):
@@ -203,7 +203,7 @@ class TouristScraper:
     ) -> list[dict]:
         assert engine == EngineEnum.GOOGLE, f"{engine} is not supported."
         page = await self.aget_page(
-            f"https://google.com/search?query={quote_plus(query)}", **httpx_kws
+            f"https://google.com/search?q={quote_plus(query)}", **httpx_kws
         )
         pages = []
         if source_html := page.get("source_html"):
