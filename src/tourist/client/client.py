@@ -12,6 +12,11 @@ from tourist.client.parse_utils import get_text, get_links_from_serp
 logger = logging.getLogger("tourist.client")
 logger.addHandler(logging.NullHandler())
 
+DEFAULT_MAX_RESULTS = 3
+DEFAULT_CONCURRENCY = 2  # should be <= 2 when running locally
+ENDPOINT_ACTIONS = "/tour/actions"
+ENDPOINT_VIEW = "/tour/view"
+
 
 class EngineEnum(str, Enum):
     GOOGLE = "google"
@@ -35,13 +40,21 @@ class TouristScraper:
         self,
         base_url: str,
         secret: str,
-        concurrency: int = 5,
+        concurrency: int = DEFAULT_CONCURRENCY,
         version_prefix: str = "/v1",
     ) -> None:
         self.base_url = base_url
         self.secret = secret
         self.concurrency = concurrency
         self.version_prefix = version_prefix
+
+    def get_actions_uri(self):
+        uri = self.version_prefix + ENDPOINT_ACTIONS
+        return uri
+    
+    def get_view_uri(self):
+        uri = self.version_prefix + ENDPOINT_VIEW
+        return uri
 
     async def apost(self, uri: str, body: dict = None, **httpx_kws):
         timeout = httpx_kws.pop("timeout", 30.0)
@@ -82,7 +95,6 @@ class TouristScraper:
         window_size: tuple[int, int] = DEFAULT_WINDOW_SIZE,
         **httpx_kws,
     ) -> dict:
-        uri = self.version_prefix + "/tour/view"
         payload = {
             "target_url": target_url,
             "warmup_url": warmup_url,
@@ -92,7 +104,7 @@ class TouristScraper:
             "timeout": timeout,
             "window_size": window_size,
         }
-        return await self.aio_post(uri, payload, **httpx_kws)
+        return await self.aio_post(self.get_view_uri(), payload, **httpx_kws)
 
     def get_page(
         self,
@@ -105,7 +117,6 @@ class TouristScraper:
         window_size: tuple[int, int] = DEFAULT_WINDOW_SIZE,
         **httpx_kws,
     ) -> dict:
-        uri = self.version_prefix + "/tour/view"
         payload = {
             "target_url": target_url,
             "warmup_url": warmup_url,
@@ -115,7 +126,7 @@ class TouristScraper:
             "timeout": timeout,
             "window_size": window_size,
         }
-        return self.post(uri, payload, **httpx_kws)
+        return self.post(self.get_view_uri(), payload, **httpx_kws)
 
     async def ado_actions(
         self,
@@ -125,14 +136,13 @@ class TouristScraper:
         window_size: tuple[int, int] = DEFAULT_WINDOW_SIZE,
         **httpx_kws,
     ) -> dict:
-        uri = self.version_prefix + "/tour/actions"
         payload = {
             "actions": actions,
             "user_agent": user_agent,
             "timeout": timeout,
             "window_size": window_size,
         }
-        return await self.apost(uri, payload, **httpx_kws)
+        return await self.apost(self.get_actions_uri(), payload, **httpx_kws)
 
     def do_actions(
         self,
@@ -142,30 +152,30 @@ class TouristScraper:
         window_size: tuple[int, int] = DEFAULT_WINDOW_SIZE,
         **httpx_kws,
     ) -> dict:
-        uri = self.version_prefix + "/tour/actions"
         payload = {
             "actions": actions,
             "user_agent": user_agent,
             "timeout": timeout,
             "window_size": window_size,
         }
-        return self.post(uri, payload, **httpx_kws)
+        return self.post(self.get_actions_uri(), payload, **httpx_kws)
 
     # TODO/Contribution: open to re-works of this function + error checking.
     def get_serp(
         self,
         query: str,
-        max_results: int = 5,
+        max_results: int = DEFAULT_MAX_RESULTS,
+        exclude_hosts: list[str] = [],
         engine: EngineEnum = EngineEnum.GOOGLE,
         **httpx_kws,
     ) -> list[dict]:
-        assert engine == EngineEnum.GOOGLE, f"{engine} is not supported."
+        assert engine == EngineEnum.GOOGLE, f"{engine} is not yet supported."
         page = self.get_page(
             f"https://google.com/search?q={quote_plus(query)}", **httpx_kws
         )
         pages = []
         if source_html := page.get("source_html"):
-            links = get_links_from_serp(source_html, engine)
+            links = get_links_from_serp(source_html, engine.value, exclude_hosts)
             logger.debug(f"Found {len(links)} relevant links on SERP")
             # retrieve links in separate threads
             with ThreadPoolExecutor(max_workers=self.concurrency) as pool:
@@ -197,17 +207,18 @@ class TouristScraper:
     async def aget_serp(
         self,
         query: str,
-        max_results: int = 5,
+        max_results: int = DEFAULT_MAX_RESULTS,
+        exclude_hosts: list[str] = [],
         engine: EngineEnum = EngineEnum.GOOGLE,
         **httpx_kws,
     ) -> list[dict]:
-        assert engine == EngineEnum.GOOGLE, f"{engine} is not supported."
+        assert engine == EngineEnum.GOOGLE, f"{engine} is not yet supported."
         page = await self.aget_page(
-            f"https://google.com/search?q={quote_plus(query)}", **httpx_kws
+            f"https://www.google.com/search?q={quote_plus(query)}", **httpx_kws
         )
         pages = []
         if source_html := page.get("source_html"):
-            links = get_links_from_serp(source_html, engine)
+            links = get_links_from_serp(source_html, engine.value, exclude_hosts)
             logger.debug(f"Found {len(links)} relevant links on SERP")
             tasks = {
                 asyncio.create_task(self.aget_page(link, **httpx_kws)): link
