@@ -36,12 +36,18 @@ def view_page(tourist_view_request: TouristViewRequest):
     if page := get_page(**tourist_view_request.model_dump()):
         return page
     else:
-        raise HTTPException(status_code=400, detail="something went wrong")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="something went wrong",
+        )
 
 
-@tour.post("/actions")
+@tour.post("/actions", response_model=TouristActionsResponse)
 def do_actions(tourist_actions_request: TouristActionsRequest):
     if page := get_page_with_actions(**tourist_actions_request.model_dump()):
         return page
     else:
-        raise HTTPException(status_code=status.HTTP_4, detail="something went wrong")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="something went wrong",
+        )
