@@ -1,0 +1,4 @@
+llama-index-llms-ollama
+llama-index-core
+
+tourist
