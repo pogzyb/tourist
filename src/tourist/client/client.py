@@ -51,7 +51,7 @@ class TouristScraper:
     def get_actions_uri(self):
         uri = self.version_prefix + ENDPOINT_ACTIONS
         return uri
-    
+
     def get_view_uri(self):
         uri = self.version_prefix + ENDPOINT_VIEW
         return uri
