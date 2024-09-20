@@ -4,22 +4,22 @@
 
 An open-source, low-cost, serverless application for SERP extraction and web scraping. 
 
-Work on your LLM projects without worrying about credits, subscriptions, or rate-limits. Tourist is a free alternative to many mainstream SERP and web scraping API services. Run Tourist on your machine or deploy it into your own AWS account.  
+Work on LLM projects without worrying about credits, subscriptions, or rate-limits. Tourist is a free alternative to many mainstream SERP API services. Run Tourist on your machine or deploy it into your own AWS account.  
 
 > [!IMPORTANT]  
-> Tourist is still in early development. Features and API's may change unexpectedly.
+> Tourist is in early development. Features and API's may change unexpectedly.
 
 ## Overview
 ![tourist-architecture](./docs/touristv1.png "Overview")
 
-Tourist has both Service and Client components. The Service (HTTP API) handles requests from the Client (your app, agent, or scraper scripts). You're in control of both components, and so none of your data is ever stored by third parties.
+Tourist has both Service and Client components. The Service (HTTP API) handles requests from the Client (your app, agent, or scraper scripts). You're in control of both components! None of your data is ever processed or stored by third parties.
 
 ## Service
 
 ### Local deployment (for testing...)
 
 > [!TIP]  
-> It is recommended to use Docker for running Tourist locally due to the various dependencies required to do headless browsing.
+> Docker is recommended for running Tourist locally to handle dependencies for headless browsing.
 
 1. Have Docker installed
 2. `docker pull ghcr.io/pogzyb/tourist:latest`
@@ -47,7 +47,7 @@ Deploy your own instance of Tourist into AWS with Terraform:
 Use your endpoint: `https://<uuid>.execute-api.us-east-1.amazonaws.com/main` (available in terraform outputs)
 
 > [!WARNING]  
-> Tourist uses serverless infrastructure to keep costs extremely low; however depending on how heavily you use your API, these costs will not be $0.00.
+> Tourist uses serverless infrastructure to keep costs extremely low; however these costs will not be $0.00 depending on how heavily you use your API.
 
 > [!IMPORTANT]  
 > Tourist uses the X-SECRET authorization header to protect your API, you should set this value in `terraform/aws/terraform.tfvars`
