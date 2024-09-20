@@ -2,10 +2,7 @@ import os
 
 from pydantic import BaseModel, field_validator
 
-
-DEFAULT_TIMEOUT = 28.0
-DEFAULT_USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
-DEFAULT_WINDOW_SIZE = (1920, 1080)
+from tourist.common import DEFAULT_TIMEOUT, DEFAULT_USER_AGENT, DEFAULT_WINDOW_SIZE
 
 
 class BaseRequest(BaseModel):

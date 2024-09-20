@@ -28,7 +28,10 @@ class TouristViewResponse(BaseResponse):
     b64_screenshot: str | None = None
 
 
-class TouristActionsResponse(BaseResponse): ...
+class TouristActionsResponse(BaseResponse):
+    # TODO: should this be a json string or should the user be responsible
+    # ensuring the payload is either serializable or already serialized?
+    actions_output: dict
 
 
 @tour.post("/view", response_model=TouristViewResponse)
@@ -45,7 +48,7 @@ def view_page(tourist_view_request: TouristViewRequest):
 @tour.post("/actions", response_model=TouristActionsResponse)
 def do_actions(tourist_actions_request: TouristActionsRequest):
     if page := get_page_with_actions(**tourist_actions_request.model_dump()):
-        return page
+        return TouristActionsResponse(actions_output=page)
     else:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
