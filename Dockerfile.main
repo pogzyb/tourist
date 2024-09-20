@@ -1,17 +1,14 @@
-FROM public.ecr.aws/lambda/python:3.12.2024.07.10.11-x86_64 AS build
-
-ENV CHROME_VERSION=127.0.6533.88
+FROM public.ecr.aws/lambda/python:3.12.2024.09.13.17-x86_64 AS build
 
 RUN dnf install -y unzip && \
-    curl -Lo "/tmp/chromedriver-linux64.zip" "https://storage.googleapis.com/chrome-for-testing-public/${CHROME_VERSION}/linux64/chromedriver-linux64.zip" && \
-    curl -Lo "/tmp/chrome-linux64.zip" "https://storage.googleapis.com/chrome-for-testing-public/${CHROME_VERSION}/linux64/chrome-linux64.zip" && \
+    curl -Lo "/tmp/chromedriver-linux64.zip" "https://storage.googleapis.com/chrome-for-testing-public/129.0.6668.58/linux64/chromedriver-linux64.zip" && \
+    curl -Lo "/tmp/chrome-linux64.zip" "https://storage.googleapis.com/chrome-for-testing-public/129.0.6668.58/linux64/chrome-linux64.zip" && \
     unzip /tmp/chromedriver-linux64.zip -d /opt/ && \
     unzip /tmp/chrome-linux64.zip -d /opt/
 
-FROM public.ecr.aws/lambda/python:3.12.2024.07.10.11-x86_64
+FROM public.ecr.aws/lambda/python:3.12.2024.09.13.17-x86_64
 
 ARG TOURIST_VERSION
-ENV TOURIST_VERSION=${TOURIST_VERSION}
 ARG CREATED
 ARG REVISION
 
@@ -52,7 +49,9 @@ RUN dnf install -y \
   	&& rm -rf /var/cache/yum && \
     pip install --no-cache-dir tourist[app]==$TOURIST_VERSION
 
-COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.4 /lambda-adapter /opt/extensions/lambda-adapter
+ENV AWS_LWA_VERSION=0.8.4
+
+COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:${AWS_LWA_VERSION} /lambda-adapter /opt/extensions/lambda-adapter
 COPY --from=build /opt/chrome-linux64 /tourist/browser
 COPY --from=build /opt/chromedriver-linux64 /tourist/browser
 

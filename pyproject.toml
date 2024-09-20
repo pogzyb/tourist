@@ -21,7 +21,7 @@ dependencies = [
 [project.optional-dependencies]
 app = [
   "fastapi[standard]>=0.112.0",
-  "selenium==4.23.1",
+  "selenium==4.24.0",
   "pydantic==2.8.0"
 ]
 
