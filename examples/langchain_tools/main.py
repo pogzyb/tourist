@@ -7,7 +7,7 @@ from langchain_aws import ChatBedrock
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
-from tourist.core import TouristScraper
+from tourist.client import TouristScraper
 
 from scrape_tool import TouristScraperTool
 from serp_tool import TouristSERPTool

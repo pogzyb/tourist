@@ -1,7 +1,7 @@
 from textwrap import dedent
 from pprint import pprint
 
-from tourist.core import TouristScraper
+from tourist.client import TouristScraper
 
 TOURIST_BASE = "http://localhost:8000"
 TOURIST_X_SECRET = "doesntmatterlocally"
