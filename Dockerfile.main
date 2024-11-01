@@ -1,19 +1,19 @@
-FROM public.ecr.aws/lambda/python:3.12.2024.09.13.17-x86_64 AS build
+FROM public.ecr.aws/lambda/python:3.12.2024.10.30.16-x86_64 AS build
 
 RUN dnf install -y unzip && \
-    curl -Lo "/tmp/chromedriver-linux64.zip" "https://storage.googleapis.com/chrome-for-testing-public/129.0.6668.58/linux64/chromedriver-linux64.zip" && \
-    curl -Lo "/tmp/chrome-linux64.zip" "https://storage.googleapis.com/chrome-for-testing-public/129.0.6668.58/linux64/chrome-linux64.zip" && \
+    curl -Lo "/tmp/chromedriver-linux64.zip" "https://storage.googleapis.com/chrome-for-testing-public/130.0.6723.91/linux64/chromedriver-linux64.zip" && \
+    curl -Lo "/tmp/chrome-linux64.zip" "https://storage.googleapis.com/chrome-for-testing-public/130.0.6723.91/linux64/chrome-linux64.zip" && \
     unzip /tmp/chromedriver-linux64.zip -d /opt/ && \
     unzip /tmp/chrome-linux64.zip -d /opt/
 
-FROM public.ecr.aws/lambda/python:3.12.2024.09.13.17-x86_64
+FROM public.ecr.aws/lambda/python:3.12.2024.10.30.16-x86_64
 
 ARG TOURIST_VERSION
 ARG CREATED
 ARG REVISION
 
 LABEL org.opencontainers.image.title="Tourist"
-LABEL org.opencontainers.image.description="An open-source, low-cost, serverless application for web scraping."
+LABEL org.opencontainers.image.description="An open-source, serverless application for web scraping."
 LABEL org.opencontainers.image.version=$TOURIST_VERSION
 LABEL org.opencontainers.image.authors="pogzyb@umich.edu"
 LABEL org.opencontainers.image.url="https://github.com/pogzyb/tourist"
