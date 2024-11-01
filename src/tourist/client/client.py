@@ -237,8 +237,8 @@ class TouristScraper:
                             break
                 except:
                     ...
-        # clean up coroutines
-        tasks = [task.cancel() for task in tasks]
+            # clean up coroutines
+            tasks = [task.cancel() for task in tasks]
         # return serp content
         logger.debug(f"Extracted {len(pages)} pages of information from SERP")
         return pages

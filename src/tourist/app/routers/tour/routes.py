@@ -30,7 +30,7 @@ class TouristViewResponse(BaseResponse):
 
 class TouristActionsResponse(BaseResponse):
     # TODO: should this be a json string or should the user be responsible
-    # ensuring the payload is either serializable or already serialized?
+    #  ensuring the payload is either serializable or already serialized?
     actions_output: dict
 
 

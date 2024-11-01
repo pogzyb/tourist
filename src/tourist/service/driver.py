@@ -39,12 +39,12 @@ def _chrome(
     window_size: tuple[int, int] = DEFAULT_WINDOW_SIZE,
 ):
     chrome = None
+    user_data_dir = mkdtemp(prefix="chrome-")
+    data_path = mkdtemp(prefix="chrome-")
+    disk_cache_dir = mkdtemp(prefix="chrome-")
+
     try:
         window_width, window_height = window_size
-
-        user_data_dir = mkdtemp(prefix="chrome-")
-        data_path = mkdtemp(prefix="chrome-")
-        disk_cache_dir = mkdtemp(prefix="chrome-")
 
         # TODO/Contribution: Add support for proxy
         options = webdriver.ChromeOptions()
@@ -101,12 +101,9 @@ def get_page_with_actions(
 ) -> PageActions | None:
     with _chrome(user_agent, window_size) as driver:
         driver.set_page_load_timeout(timeout)
-
         # `actions_output` can store results from the given script
         actions_output = {}
-
         exec(f"""{actions}""")
-
         return PageActions(actions_output)
 
 
@@ -122,22 +119,17 @@ def get_page(
 ) -> Page | None:
     with _chrome(user_agent, window_size) as driver:
         driver.set_page_load_timeout(timeout)
-
         if warmup_url is not None:
             driver.get(warmup_url)
             for cookie in cookies:
                 driver.add_cookie(cookie)
-
         driver.get(target_url)
         driver.implicitly_wait(1.0)
-
         data = {
             "source_html": driver.page_source,
             "cookies": driver.get_cookies(),
             "current_url": driver.current_url,
         }
-
         if screenshot:
             data["b64_screenshot"] = driver.get_screenshot_as_base64()
-
         return Page(**data)
