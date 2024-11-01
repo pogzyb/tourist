@@ -30,8 +30,8 @@ add_tool = FunctionTool.from_defaults(fn=add)
 
 def search(query: str) -> str:
     """Search places, items, people, or current events online."""
-    results = tourist_scraper.get_serp(query, max_results=1)
-    return " ".join([r["content"] for r in results])
+    serp_result = tourist_scraper.get_serp(query, max_results=1)
+    return " ".join([r["content"] for r in serp_result])
 
 
 search_tool = FunctionTool.from_defaults(fn=search)
@@ -47,9 +47,7 @@ agent = ReActAgent.from_tools(
 )
 
 results = agent.chat("Give me a summary of the latest news on this NFL season.")
-
 print(results.response)
 
 results = agent.chat("What is 8 + 8 doubled?")
-
 print(results.response)
