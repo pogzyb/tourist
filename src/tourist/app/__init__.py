@@ -13,5 +13,4 @@ def create_app():
     )
     app.include_router(info)
     app.include_router(tour, prefix="/v1")
-
     return app

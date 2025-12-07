@@ -1,12 +1,4 @@
-FROM public.ecr.aws/lambda/python:3.12.2024.10.30.16-x86_64 AS build
-
-RUN dnf install -y unzip && \
-    curl -Lo "/tmp/chromedriver-linux64.zip" "https://storage.googleapis.com/chrome-for-testing-public/130.0.6723.91/linux64/chromedriver-linux64.zip" && \
-    curl -Lo "/tmp/chrome-linux64.zip" "https://storage.googleapis.com/chrome-for-testing-public/130.0.6723.91/linux64/chrome-linux64.zip" && \
-    unzip /tmp/chromedriver-linux64.zip -d /opt/ && \
-    unzip /tmp/chrome-linux64.zip -d /opt/
-
-FROM public.ecr.aws/lambda/python:3.12.2024.10.30.16-x86_64
+FROM python:3.13-bullseye
 
 ARG TOURIST_VERSION
 ARG CREATED
@@ -18,43 +10,18 @@ LABEL org.opencontainers.image.version=$TOURIST_VERSION
 LABEL org.opencontainers.image.authors="pogzyb@umich.edu"
 LABEL org.opencontainers.image.url="https://github.com/pogzyb/tourist"
 LABEL org.opencontainers.image.source="https://github.com/pogzyb/tourist"
-LABEL org.opencontainers.image.documentation="https://github.com/pogzyb/tourist"
+LABEL org.opencontainers.image.documentation="https://github.com/pogzyb/tourist/README.md"
 LABEL org.opencontainers.image.created=$CREATED
 LABEL org.opencontainers.image.revision=$REVISION
 LABEL org.opencontainers.image.licenses="MIT"
 
-RUN dnf install -y \
-    atk \
-    cups-libs \
-    gtk3 \
-    libXcomposite \
-    alsa-lib \
-    libXcursor \
-    libXdamage \
-    libXext \
-    libXi \
-    libXrandr \
-    libXScrnSaver \
-    libXtst \
-    pango \
-    at-spi2-atk \
-    libXt \
-    xorg-x11-server-Xvfb \
-    xorg-x11-xauth \
-    dbus-glib \
-    dbus-glib-devel \
-    nss \
-    mesa-libgbm \
-    && dnf clean all \
-  	&& rm -rf /var/cache/yum && \
-    pip install --no-cache-dir tourist[app]==$TOURIST_VERSION
+RUN pip install --no-cache-dir tourist[app]==$TOURIST_VERSION && \
+  patchright install --no-deps --no-shell chrome && \
+  rm -rf /var/lib/apt/lists/*
 
-COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.4 /lambda-adapter /opt/extensions/lambda-adapter
-COPY --from=build /opt/chrome-linux64 /tourist/browser
-COPY --from=build /opt/chromedriver-linux64 /tourist/browser
+COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1 /lambda-adapter /opt/extensions/lambda-adapter
 
-ENV AWS_LWA_READINESS_CHECK_PATH=/info/readiness-check
-ENV AWS_LWA_REMOVE_BASE_PATH=/main
+ENV AWS_LWA_READINESS_CHECK_PATH=/info/health
 ENV AWS_LWA_ENABLE_COMPRESSION=true
 ENV AWS_LWA_PORT=8000
 

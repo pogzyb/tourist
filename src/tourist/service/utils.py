@@ -1,12 +1,6 @@
 from urllib.parse import urlparse
+
 from bs4 import BeautifulSoup as bs
-
-
-def get_text(source_html: str) -> str:
-    soup = bs(source_html, "html.parser")
-    text = soup.get_text().replace("\n", " ")
-    clean = " ".join(text.split())
-    return clean
 
 
 # TODO/Contribution: this function could be optimized in a few ways.
@@ -16,10 +10,8 @@ def get_links_from_serp(
     engine: str,
     exclude_hosts: list[str] = [],
 ) -> list[str]:
-    # find all <a> tags and extract the "href"
     soup = bs(source_html, "html.parser")
     all_links = [ln.get("href") for ln in soup.find_all("a")]
-    # external links only
     ext_links = [
         ln
         for ln in all_links
@@ -28,7 +20,6 @@ def get_links_from_serp(
         and f".{engine}.com" not in ln
         and not any([h in ln for h in exclude_hosts])
     ]
-    # hostnames
     links = list(
         zip(
             map(
@@ -38,7 +29,6 @@ def get_links_from_serp(
             ext_links,
         )
     )
-    # first link from every hostname? good enough.
     unique_links = []
     last_host = None
     for host, link in links:
@@ -46,5 +36,4 @@ def get_links_from_serp(
             continue
         unique_links.append(link)
         last_host = host
-
     return unique_links
