@@ -23,14 +23,14 @@ class TouristSERPTool(BaseTool):
     args_schema: Type[BaseModel] = TouristSERPInput
     scraper: TouristScraper
     error_message = "Could not retrieve information. Try again."
-    max_results: int = 5
+    max_results: int = 3
 
     def _run(
         self, query: str, run_manager: Optional[CallbackManagerForToolRun] = None
     ) -> str:
         """Use the tool."""
         if results := self.scraper.get_serp(query, self.max_results):
-            return " ".join([r["content"] for r in results])
+            return "\n\n".join([r["contents"] for r in results])
         else:
             return self.error_message
 
@@ -39,6 +39,6 @@ class TouristSERPTool(BaseTool):
     ) -> str:
         """Use the tool asynchronously."""
         if results := await self.scraper.aget_serp(query, self.max_results):
-            return " ".join([r["content"] for r in results])
+            return "\n\n".join([r["contents"] for r in results])
         else:
             return self.error_message

@@ -19,11 +19,7 @@ load_dotenv()
 
 # Assumes you're running locally,
 # change this to your cloud endpoint if you've deployed via terraform.
-scraper = TouristScraper(
-    "http://localhost:8000",
-    "supersecret",
-    concurrency=1,  # control concurrent searches/scrapes
-)
+scraper = TouristScraper("http://localhost:8000", "supersecret")
 search_tool = TouristSERPTool(scraper=scraper, max_results=3)
 scrape_tool = TouristScraperTool(scraper=scraper)
 
@@ -77,7 +73,7 @@ if __name__ == "__main__":
     config = {"configurable": {"thread_id": "1"}}
 
     ##### SERP example
-    serp_input = "What is the latest news around the 2024 Olympics in Paris?"
+    serp_input = "What is the latest news around the 2026 Olympics?"
     for event in graph.stream(
         {"messages": ("user", serp_input)}, config, stream_mode="values"
     ):
