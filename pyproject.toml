@@ -39,6 +39,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/tourist"]
+include = [
+  "src/tourist/service/assets/cookie-managers.json"
+]
 
 [tool.hatch.version]
 path = "src/tourist/__init__.py"
