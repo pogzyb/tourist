@@ -4,6 +4,8 @@ ARG TOURIST_VERSION
 ARG CREATED
 ARG REVISION
 
+ENV TOURIST_VERSION=$TOURIST_VERSION
+
 LABEL org.opencontainers.image.title="Tourist"
 LABEL org.opencontainers.image.description="An open-source, serverless application for web scraping."
 LABEL org.opencontainers.image.version=$TOURIST_VERSION
