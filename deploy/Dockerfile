@@ -8,7 +8,7 @@ ARG REVISION
 
 LABEL org.opencontainers.image.title="tourist-deploy"
 LABEL org.opencontainers.image.description="Use this container to deploy the tourist project."
-LABEL org.opencontainers.image.version=$tourist_VERSION
+LABEL org.opencontainers.image.version=$TOURIST_VERSION
 LABEL org.opencontainers.image.authors="pogzyb@umich.edu"
 LABEL org.opencontainers.image.url="https://github.com/pogzyb/tourist/deploy"
 LABEL org.opencontainers.image.source="https://github.com/pogzyb/tourist/deploy"
