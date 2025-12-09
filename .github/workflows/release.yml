@@ -34,7 +34,7 @@ jobs:
             context: deploy
             dockerfile: deploy/Dockerfile
             username: ${{ github.actor }}
-            image-name: ${{ github.repository }}
+            image-name: ${{ github.repository }}-deploy
             image-tag: ${{ github.event.release.tag_name }}
             revision: ${{ github.sha }}
             created: ${{ github.event.release.created_at }}
