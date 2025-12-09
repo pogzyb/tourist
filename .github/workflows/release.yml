@@ -19,6 +19,7 @@ jobs:
         uses: pogzyb/tourist/.github/workflows/ghcr.yml@main
         needs: [pypi-publish, pause]
         with:
+            context: .
             dockerfile: Dockerfile.main
             username: ${{ github.actor }}
             image-name: ${{ github.repository }}
