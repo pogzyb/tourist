@@ -1,9 +1,23 @@
 FROM python:3.13-bullseye
 
 ENV TOURIST_VERSION=local
+ENV DISPLAY=:99
+ENV PYTHONUNBUFFERED=1
 
 WORKDIR /local
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  apt-get update && \
+  apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    wget \
+    python3-tk \
+    gnome-screenshot \
+  && rm -rf /var/lib/apt/lists/*
+RUN pip install patchright && patchright install --no-shell --with-deps chrome
+
 COPY . .
-RUN pip install .[app] && patchright install --no-shell --with-deps chrome
+
+RUN pip install .[app]
 
 ENTRYPOINT [ "tourist" ]

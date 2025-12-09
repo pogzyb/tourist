@@ -1,9 +1,9 @@
 import logging
+from typing import Literal
 
 from httpx import AsyncClient, Client, HTTPError
 
 from tourist.common import DEFAULT_TIMEOUT, DEFAULT_MAX_RESULTS
-from tourist.client.parse_utils import get_text, get_links_from_serp
 
 logger = logging.getLogger("tourist.client")
 logger.addHandler(logging.NullHandler())
@@ -26,10 +26,11 @@ class Singleton(type):
 class TouristScraper:
     __metaclass__ = Singleton
 
-    def __init__(self, base_url: str, secret: str, version_prefix: str = "/v1") -> None:
+    def __init__(
+        self, base_url: str, x_api_key: str, version_prefix: str = "/v1"
+    ) -> None:
         self.base_url = base_url
-        self.secret = secret
-        self.concurrency = concurrency
+        self.x_api_key = x_api_key
         self.version_prefix = version_prefix
 
     def _get_serp_uri(self):
@@ -43,7 +44,7 @@ class TouristScraper:
     async def _apost(self, uri: str, body: dict = None, **httpx_kws):
         timeout = httpx_kws.pop("timeout", 30.0)
         headers = httpx_kws.pop("headers", {})
-        headers["X-SECRET"] = self.secret
+        headers["X-API-KEY"] = self.x_api_key
         async with AsyncClient(
             base_url=self.base_url, headers=headers, timeout=timeout, **httpx_kws
         ) as client:
@@ -57,7 +58,7 @@ class TouristScraper:
     def _post(self, uri: str, body: dict = None, **httpx_kws):
         timeout = httpx_kws.pop("timeout", 30.0)
         headers = httpx_kws.pop("headers", {})
-        headers["X-SECRET"] = self.secret
+        headers["X-API-KEY"] = self.x_api_key
         with Client(
             base_url=self.base_url, headers=headers, timeout=timeout, **httpx_kws
         ) as client:
@@ -71,39 +72,47 @@ class TouristScraper:
     async def aget_serp(
         self,
         search_query: str,
+        search_engine: Literal["google", "bing"] = "google",
+        exclude_hosts: list[str] = [],
         max_results: int = DEFAULT_MAX_RESULTS,
         timeout: float = DEFAULT_TIMEOUT,
         **httpx_kws,
     ) -> dict:
         payload = {
             "search_query": search_query,
+            "search_engine": search_engine,
             "max_results": max_results,
+            "exclude_hosts": exclude_hosts,
             "timeout": timeout,
         }
-        return await self._apost(self.get_serp_uri(), payload, **httpx_kws)
+        return await self._apost(self._get_serp_uri(), payload, **httpx_kws)
 
     def get_serp(
         self,
         search_query: str,
+        search_engine: Literal["google", "bing"] = "google",
+        exclude_hosts: list[str] = [],
         max_results: int = DEFAULT_MAX_RESULTS,
         timeout: float = DEFAULT_TIMEOUT,
         **httpx_kws,
     ) -> dict:
         payload = {
             "search_query": search_query,
+            "search_engine": search_engine,
             "max_results": max_results,
+            "exclude_hosts": exclude_hosts,
             "timeout": timeout,
         }
-        return self._post(self.get_serp_uri(), payload, **httpx_kws)
+        return self._post(self._get_serp_uri(), payload, **httpx_kws)
 
     async def aget_page(
         self, target_url: str, timeout: float = DEFAULT_TIMEOUT, **httpx_kws
     ) -> dict:
         payload = {"url": target_url, "timeout": timeout}
-        return await self._apost(self.get_view_uri(), payload, **httpx_kws)
+        return await self._apost(self._get_view_uri(), payload, **httpx_kws)
 
     def get_page(
         self, target_url: str, timeout: float = DEFAULT_TIMEOUT, **httpx_kws
     ) -> dict:
         payload = {"url": target_url, "timeout": timeout}
-        return self._post(self.get_view_uri(), payload, **httpx_kws)
+        return self._post(self._get_view_uri(), payload, **httpx_kws)

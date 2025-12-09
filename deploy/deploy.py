@@ -39,12 +39,15 @@ def run_tofu(
 ):
     cmd_init = f'tofu init -backend-config="region={region}" -backend-config="bucket={bucket}" -backend-config="key=tourist.tfstate"'
     run_command(cmd_init)
-    cmd_action = f'tofu {action} -var-file="tourist.tfvars" -var="x_api_key={x_api_key}" -var="region={region}" -var="project_name={prefix}" -input=false -auto-approve'
+    cmd_action = f'tofu {action} -var-file="tourist.tfvars" -var="x_api_key={x_api_key}" -var="region={region}" -var="project_name={prefix}"'
+    cmd_action = (
+        cmd_action + " -input=false -auto-approve" if action == "apply" else cmd_action
+    )
     run_command(cmd_action)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="LLMABDA setup script.")
+    parser = argparse.ArgumentParser(description="Tourist setup script.")
     parser.add_argument(
         "action",
         help="The OpenTofu action to perform.",
@@ -54,6 +57,7 @@ if __name__ == "__main__":
         "-b",
         "--state-bucket",
         help="This AWS S3 bucket stores the statefile. This should be created in your AWS account as a prerequisite to deploying.",
+        required=True,
     )
     parser.add_argument(
         "-g",

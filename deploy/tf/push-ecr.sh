@@ -6,4 +6,4 @@ docker tag ghcr.io/pogzyb/tourist:${TOURIST_VERSION:-latest} $REPO_URL:${TOURIST
 docker push $REPO_URL:${TOURIST_VERSION:-latest}
 
 # Sometimes the AWS lambda creation will fail because the image needs to exist for a few seconds before lambda can find it.
-sleep 10s
+sleep 15s

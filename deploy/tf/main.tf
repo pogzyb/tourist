@@ -85,7 +85,7 @@ resource "null_resource" "push_image_to_ecr" {
       ACCOUNT_ID      = data.aws_caller_identity.current.account_id
       REGION          = var.region
       REPO_URL        = module.ecr.repository_url
-      LLMABDA_VERSION = var.image_tag
+      TOURIST_VERSION = var.image_tag
     }
   }
   depends_on = [module.ecr]

@@ -15,11 +15,23 @@ jobs:
         steps:
             - name: Wait for PyPi index refresh
               run: sleep 30s
-    ghcr-publish:
+    ghcr-publish-tourist:
         uses: pogzyb/tourist/.github/workflows/ghcr.yml@main
         needs: [pypi-publish, pause]
         with:
             dockerfile: Dockerfile.main
+            username: ${{ github.actor }}
+            image-name: ${{ github.repository }}
+            image-tag: ${{ github.event.release.tag_name }}
+            revision: ${{ github.sha }}
+            created: ${{ github.event.release.created_at }}
+        secrets:
+            gh-token: ${{ secrets.GITHUB_TOKEN }}
+    ghcr-publish-tourist-deploy:
+        uses: pogzyb/tourist/.github/workflows/ghcr.yml@main
+        with:
+            context: deploy
+            dockerfile: deploy/Dockerfile
             username: ${{ github.actor }}
             image-name: ${{ github.repository }}
             image-tag: ${{ github.event.release.tag_name }}

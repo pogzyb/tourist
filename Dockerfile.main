@@ -15,7 +15,19 @@ LABEL org.opencontainers.image.created=$CREATED
 LABEL org.opencontainers.image.revision=$REVISION
 LABEL org.opencontainers.image.licenses="MIT"
 
-RUN pip install --no-cache-dir tourist[app]==$TOURIST_VERSION && \
+ENV DISPLAY=:99
+ENV PYTHONUNBUFFERED=1
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  apt-get update && \
+  apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    wget \
+    python3-tk \
+    gnome-screenshot && \
+  rm -rf /var/lib/apt/lists/* && \
+  pip install --no-cache-dir tourist[app]==$TOURIST_VERSION && \
   patchright install --no-deps --no-shell chrome && \
   rm -rf /var/lib/apt/lists/*
 

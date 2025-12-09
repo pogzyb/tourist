@@ -1,14 +1,18 @@
-import logging
+from typing import Literal
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, field_validator
 
 from tourist.app.base import BaseResponse, BaseRequest
 from tourist.service import get_page, get_serp_results
+from tourist.app.routers.auth_mw import check_secret_key
 
-tour = APIRouter(prefix="/tour", redirect_slashes=True, tags=["Tour"])
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+tour = APIRouter(
+    prefix="/tour",
+    redirect_slashes=True,
+    tags=["Tour"],
+    dependencies=[Depends(check_secret_key)],
+)
 
 
 class Page(BaseModel):
@@ -18,7 +22,9 @@ class Page(BaseModel):
 
 class TouristSerpRequest(BaseRequest):
     search_query: str
-    max_results: int
+    search_engine: Literal["google", "bing"]
+    max_results: int = 3
+    exclude_hosts: list[str] | None = []
 
     @field_validator("max_results")
     @classmethod
@@ -40,8 +46,8 @@ class TouristViewResponse(BaseResponse, Page): ...
 
 
 @tour.post("/serp", response_model=TouristSerpResponse)
-def do_serp(tourist_serp_request: TouristSerpRequest):
-    if serp_results := get_serp_results(**tourist_serp_request.model_dump()):
+async def do_serp(tourist_serp_request: TouristSerpRequest):
+    if serp_results := await get_serp_results(**tourist_serp_request.model_dump()):
         pages = [
             Page(url=r["current_url"], contents=r["contents"]) for r in serp_results
         ]
@@ -55,9 +61,9 @@ def do_serp(tourist_serp_request: TouristSerpRequest):
 
 
 @tour.post("/view", response_model=TouristViewResponse)
-def view_page(tourist_view_request: TouristViewRequest):
-    if page := get_page(**tourist_view_request.model_dump()):
-        return TouristViewResponse(url=r["current_url"], contents=r["contents"])
+async def view_page(tourist_view_request: TouristViewRequest):
+    if page := await get_page(**tourist_view_request.model_dump()):
+        return TouristViewResponse(url=page["current_url"], contents=page["contents"])
     else:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

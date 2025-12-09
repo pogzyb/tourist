@@ -3,16 +3,16 @@ FROM ghcr.io/opentofu/opentofu:minimal AS tofu
 FROM alpine:3.20
 
 ARG CREATED
-ARG LLMABDA_VERSION
+ARG TOURIST_VERSION
 ARG REVISION
 
-LABEL org.opencontainers.image.title="llmabda-deploy"
-LABEL org.opencontainers.image.description="Use this container to deploy the llmabda project."
-LABEL org.opencontainers.image.version=$LLMABDA_VERSION
+LABEL org.opencontainers.image.title="tourist-deploy"
+LABEL org.opencontainers.image.description="Use this container to deploy the tourist project."
+LABEL org.opencontainers.image.version=$tourist_VERSION
 LABEL org.opencontainers.image.authors="pogzyb@umich.edu"
-LABEL org.opencontainers.image.url="https://github.com/pogzyb/llmabda/deploy"
-LABEL org.opencontainers.image.source="https://github.com/pogzyb/llmabda/deploy"
-LABEL org.opencontainers.image.documentation="https://github.com/pogzyb/llmabda/deploy"
+LABEL org.opencontainers.image.url="https://github.com/pogzyb/tourist/deploy"
+LABEL org.opencontainers.image.source="https://github.com/pogzyb/tourist/deploy"
+LABEL org.opencontainers.image.documentation="https://github.com/pogzyb/tourist/deploy"
 LABEL org.opencontainers.image.created=$CREATED
 LABEL org.opencontainers.image.revision=$REVISION
 LABEL org.opencontainers.image.licenses="MIT"

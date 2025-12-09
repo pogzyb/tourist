@@ -1,5 +1,5 @@
 import os
-import sys
+import subprocess
 
 import typer
 import uvicorn
@@ -7,23 +7,19 @@ import uvicorn
 app = typer.Typer()
 
 
-# TODO/contribution: Add flags for customizations like port.
 @app.command()
 def serve():
-
-    ok = True
-    chrome_binary = os.getenv("TOURIST__CHROME_BIN", "/tourist/browser/chrome")
-
-    if ok:
-        uvicorn.run(
-            "tourist.app:create_app",
-            host="0.0.0.0",
-            port=int(os.getenv("TOURIST__PORT", 8000)),
-            log_level="info",
-            factory=True,
-        )
-    else:
-        sys.exit(1)
+    x11_proc = subprocess.Popen(
+        f"Xvfb {os.getenv('DISPLAY')} -screen 0 1366x768x24",
+        shell=True,
+    )
+    uvicorn.run(
+        "tourist.app:create_app",
+        host="0.0.0.0",
+        port=int(os.getenv("TOURIST__PORT", 8000)),
+        log_level="debug",
+        factory=True,
+    )
 
 
 def main() -> None:

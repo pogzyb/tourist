@@ -1,36 +1,113 @@
+import asyncio
+import json
+import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 from urllib.parse import quote_plus
-from typing import LiteralString
+from typing import Literal
 
-from patchright.async_api import async_playwright, Playwright
+from patchright.async_api import (
+    async_playwright,
+    Playwright,
+    TimeoutError as PlaywrightTimeoutError,
+)
 from html_to_markdown import (
     ConversionOptions,
     convert_with_handle,
     create_options_handle,
+    convert,
 )
 
-from service.utils import get_links_from_serp
+from .utils import get_links_from_serp
+
+logger = logging.getLogger("uvicorn.error")
+
+DEFAULT_WAIT_MS = 1000
 
 
 @asynccontextmanager
 async def chrome(**kws):
-    async with async_playwright(**kws) as playwright:
-        browser = playwright.chrome
-        context = await browser.new_context()
+    async with async_playwright() as playwright:
+        context = await playwright.chromium.launch_persistent_context(
+            "/tmp/usr-data/", channel="chrome", headless=False
+        )
         yield context
         await context.close()
-        await browser.close()
+
+
+async def handle_cookie_preferences(page) -> None:
+    current_dir = Path(__file__).parent.resolve()
+    with open(current_dir / "assets/cookie-managers.json", "r") as f:
+        cookie_managers = json.load(f)
+    locator = None
+    for manager in cookie_managers:
+        try:
+            actions = manager.get("actions", [])
+            for action in actions:
+                if action["type"] == "iframe":
+                    if await page.locator(action["value"]).count() > 0:
+                        locator = page.frame_locator(action["value"]).first
+                    else:
+                        continue
+                elif action["type"] == "css-selector":
+                    if await page.locator(action["value"]).first.is_visible():
+                        locator = page.locator(action["value"])
+                        break
+                elif action["type"] == "css-selector-list":
+                    for selector in action["value"]:
+                        if await page.locator(selector).first.is_visible():
+                            locator = page.locator(selector)
+                            break
+        except:
+            continue
+    if locator is not None:
+        try:
+            async with page.expect_navigation(wait_until="networkidle", timeout=10000):
+                await locator.first.click(delay=10)
+        except (PlaywrightTimeoutError, Exception):
+            # just return, do not stop the serping
+            ...
 
 
 async def scrape(url, ctx) -> dict[str, str]:
     page = await ctx.new_page()
-    await page.goto(url)
+    await page.goto(url, wait_until="domcontentloaded")
+    await page.wait_for_timeout(DEFAULT_WAIT_MS)
+    await handle_cookie_preferences(page)
     return {
-        "title": page.title(),
+        "title": await page.title(),
         "html": await page.content(),
-        "current_url": page.url(),
+        "current_url": page.url,
         "requested_url": url,
     }
+
+
+async def get_serp_results(
+    search_query: str,
+    search_engine: Literal["google", "bing"],
+    exclude_hosts: list[str],
+    max_results: int = 5,
+    **chrome_kws,
+) -> list[dict[str, str]]:
+    try:
+        serp_results = []
+        handle = create_options_handle(ConversionOptions(hocr_spatial_tables=False))
+        async with chrome(**chrome_kws) as ctx:
+            serp = await scrape(
+                f"https://{search_engine}.com/search?q={quote_plus(search_query)}", ctx
+            )
+            links = get_links_from_serp(serp["html"], search_engine, exclude_hosts)[
+                :max_results
+            ]
+            for task in asyncio.as_completed([scrape(link, ctx) for link in links]):
+                result = await task
+                html = result.pop("html")
+                result["contents"] = convert_with_handle(html, handle)
+                serp_results.append(result)
+        return serp_results
+    except:
+        logger.exception("Could not get serp results:")
+        return None
 
 
 async def get_page(url: str, **chrome_kws) -> dict[str, str]:
@@ -39,23 +116,3 @@ async def get_page(url: str, **chrome_kws) -> dict[str, str]:
         html = result.pop("html")
         result["contents"] = convert(html)
         return result
-
-
-async def get_serp_results(
-    query: str,
-    engine: LiteralString["google", "bing"],
-    exclude_hosts: list[str],
-    max_results: int = 5,
-    **chrome_kws,
-) -> list[dict[str, str]]:
-    serp_results = []
-    handle = create_options_handle(ConversionOptions(hocr_spatial_tables=False))
-    async with chrome(**chrome_kws) as ctx:
-        serp = await get_page(f"https://google.com/search?q={quote_plus(query)}", ctx)
-        links = get_links_from_serp(serp["html"], engine, exclude_hosts)[:max_results]
-        for task in asyncio.as_completed([scrape(link, ctx) for link in links]):
-            result = await task
-            html = result.pop("html")
-            result["contents"] = convert_with_handle(html, handle)
-            serp_results.append(result)
-    return serp_results
