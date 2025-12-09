@@ -3,6 +3,9 @@ name: GHCR Build and Push
 on:
   workflow_call:
     inputs:
+      context:
+        required: true
+        type: string
       dockerfile:
         required: true
         type: string
@@ -52,7 +55,7 @@ jobs:
       - name: Build and push docker image
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ${{ inputs.context }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
