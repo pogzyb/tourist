@@ -30,7 +30,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     gnome-screenshot && \
   rm -rf /var/lib/apt/lists/* && \
   pip install --no-cache-dir tourist[app]==$TOURIST_VERSION && \
-  patchright install --no-deps --no-shell chrome && \
+  patchright install --no-shell --with-deps chrome && \
   rm -rf /var/lib/apt/lists/*
 
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1 /lambda-adapter /opt/extensions/lambda-adapter
