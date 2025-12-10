@@ -12,8 +12,8 @@ def serve():
 
     if not os.path.exists("/tmp/.X99-lock"):
         print("starting X11")
-        subprocess.Popen(
-            f"Xvfb :99 -screen 0 1280x720x24",
+        x11_proc = subprocess.Popen(
+            f"Xvfb :99 -screen 0 1280x720x24 -ac -nolisten tcp -nolisten unix",
             shell=True,
         )
 
