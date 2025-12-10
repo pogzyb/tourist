@@ -45,7 +45,7 @@ def run_tofu(
     run_command(cmd_init)
     cmd_action = f'tofu {action} -var-file="tourist.tfvars" -var="x_api_key={x_api_key}" -var="region={region}" -var="project_name={prefix}"'
     cmd_action = (
-        cmd_action + " -input=false -auto-approve" if action == "apply" else cmd_action
+        cmd_action + " -input=false -auto-approve" if action != "plan" else cmd_action
     )
     run_command(cmd_action)
 
