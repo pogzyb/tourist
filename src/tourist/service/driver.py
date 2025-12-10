@@ -1,7 +1,10 @@
 import asyncio
 import json
 import logging
-from contextlib import asynccontextmanager
+import shutil
+from pathlib import Path
+from tempfile import mkdtemp
+from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
 from urllib.parse import quote_plus
 from typing import Literal
@@ -25,14 +28,44 @@ logger = logging.getLogger("uvicorn.error")
 DEFAULT_WAIT_MS = 1000
 
 
+@contextmanager
+def temp_dirs():
+    user_data_dir = mkdtemp(prefix="chrome-")
+    data_path = mkdtemp(prefix="chrome-")
+    disk_cache_dir = mkdtemp(prefix="chrome-")
+    yield (user_data_dir, data_path, disk_cache_dir)
+    if Path(user_data_dir).is_dir():
+        shutil.rmtree(user_data_dir)
+    if Path(data_path).is_dir():
+        shutil.rmtree(data_path)
+    if Path(disk_cache_dir).is_dir():
+        shutil.rmtree(disk_cache_dir)
+
+
 @asynccontextmanager
 async def chrome(**kws):
-    async with async_playwright() as playwright:
-        context = await playwright.chromium.launch_persistent_context(
-            "/tmp/usr-data/", channel="chrome", headless=False
-        )
-        yield context
-        await context.close()
+    with temp_dirs() as tmp:
+        user_data_dir, data_path, disk_cache_dir = tmp
+        async with async_playwright() as playwright:
+            context = await playwright.chromium.launch_persistent_context(
+                user_data_dir,
+                channel="chrome",
+                headless=False,
+                args=[
+                    "--no-sandbox",
+                    "--disable-gpu",
+                    "--disable-dev-shm-usage",
+                    "--disable-dev-tools",
+                    "--deny-permission-prompts",
+                    "--no-zygote",
+                    f"--data-path={data_path}",
+                    f"--disk-cache-dir={disk_cache_dir}",
+                    "--ignore-certificate-errors",
+                    "--remote-debugging-port=9222",
+                ],
+            )
+            yield context
+            await context.close()
 
 
 async def handle_cookie_preferences(page) -> None:

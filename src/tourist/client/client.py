@@ -42,7 +42,7 @@ class TouristScraper:
         return uri
 
     async def _apost(self, uri: str, body: dict = None, **httpx_kws):
-        timeout = httpx_kws.pop("timeout", 30.0)
+        timeout = httpx_kws.pop("timeout", DEFAULT_TIMEOUT)
         headers = httpx_kws.pop("headers", {})
         headers["X-API-KEY"] = self.x_api_key
         async with AsyncClient(
@@ -56,7 +56,7 @@ class TouristScraper:
                 return {"error": True, "detail": f"There was an HTTPError: {e}"}
 
     def _post(self, uri: str, body: dict = None, **httpx_kws):
-        timeout = httpx_kws.pop("timeout", 30.0)
+        timeout = httpx_kws.pop("timeout", DEFAULT_TIMEOUT)
         headers = httpx_kws.pop("headers", {})
         headers["X-API-KEY"] = self.x_api_key
         with Client(
@@ -75,7 +75,6 @@ class TouristScraper:
         search_engine: Literal["google", "bing"] = "google",
         exclude_hosts: list[str] = [],
         max_results: int = DEFAULT_MAX_RESULTS,
-        timeout: float = DEFAULT_TIMEOUT,
         **httpx_kws,
     ) -> dict:
         payload = {
@@ -83,7 +82,6 @@ class TouristScraper:
             "search_engine": search_engine,
             "max_results": max_results,
             "exclude_hosts": exclude_hosts,
-            "timeout": timeout,
         }
         return await self._apost(self._get_serp_uri(), payload, **httpx_kws)
 
@@ -93,7 +91,6 @@ class TouristScraper:
         search_engine: Literal["google", "bing"] = "google",
         exclude_hosts: list[str] = [],
         max_results: int = DEFAULT_MAX_RESULTS,
-        timeout: float = DEFAULT_TIMEOUT,
         **httpx_kws,
     ) -> dict:
         payload = {
@@ -101,18 +98,13 @@ class TouristScraper:
             "search_engine": search_engine,
             "max_results": max_results,
             "exclude_hosts": exclude_hosts,
-            "timeout": timeout,
         }
         return self._post(self._get_serp_uri(), payload, **httpx_kws)
 
-    async def aget_page(
-        self, target_url: str, timeout: float = DEFAULT_TIMEOUT, **httpx_kws
-    ) -> dict:
-        payload = {"url": target_url, "timeout": timeout}
+    async def aget_page(self, target_url: str, **httpx_kws) -> dict:
+        payload = {"url": target_url}
         return await self._apost(self._get_view_uri(), payload, **httpx_kws)
 
-    def get_page(
-        self, target_url: str, timeout: float = DEFAULT_TIMEOUT, **httpx_kws
-    ) -> dict:
-        payload = {"url": target_url, "timeout": timeout}
+    def get_page(self, target_url: str, **httpx_kws) -> dict:
+        payload = {"url": target_url}
         return self._post(self._get_view_uri(), payload, **httpx_kws)
