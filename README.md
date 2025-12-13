@@ -21,8 +21,7 @@ Tourist has both Service and Client components. The Service (HTTP API) handles r
 > [!TIP]  
 > Docker is recommended for running Tourist locally to handle dependencies for headless browsing.
 
-1. Docker Daemon
-2. `docker run -e X_API_KEY="whatever" -p 8000:8000 ghcr.io/pogzyb/tourist:latest`
+1. `docker run -e X_API_KEY="whatever" -p 8000:8000 ghcr.io/pogzyb/tourist:latest`
 
 If the service came up correctly, you should see:
 ```
@@ -48,7 +47,7 @@ Example deployment command:
 ```
 docker run \
     -v /var/run/docker.sock:/var/run/docker.sock \
-    --env-file .env.aws \
+    --env-file .env \
     ghcr.io/pogzyb/tourist-deploy:latest \
     apply \
     -b tourist-statefile \

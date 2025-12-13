@@ -88,7 +88,7 @@ resource "null_resource" "push_image_to_ecr" {
       TOURIST_VERSION = var.image_tag
     }
   }
-  depends_on = [module.ecr]
+  depends_on = [ module.ecr ]
 }
 
 ### LAMBDA
@@ -119,4 +119,6 @@ module "lambda_function" {
   tags = {
     Name = "${var.project_name}-function"
   }
+
+  depends_on = [ null_resource.push_image_to_ecr ]
 }

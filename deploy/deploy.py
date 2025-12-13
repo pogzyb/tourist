@@ -30,7 +30,7 @@ def run_command(cmd: str):
         raise Exception(f"Command '{cmd}' failed with exit code {return_code}")
 
 
-def docker_tag():
+def docker_pull():
     run_command("docker pull ghcr.io/pogzyb/tourist:latest")
 
 
@@ -90,7 +90,7 @@ if __name__ == "__main__":
                 "The --x-api-key value is missing. This is required to secure your endpoint."
             )
         # Prepare the tourist docker image for the user's ECR repository
-        docker_tag()
+        docker_pull()
 
     # Run tofu
     run_tofu(

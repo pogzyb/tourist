@@ -7,7 +7,7 @@ Behind the scenes the deployment container uses [OpenTofu](https://opentofu.org/
 
 #### Prerequisites
 
-1. AWS Account and Credentials
+1. AWS Account and Credentials (passed to container via `.env` or `-e`)
 2. S3 Bucket for storing an OpenTofu statefile
 3. Docker Daemon
 
@@ -41,21 +41,22 @@ options:
 
 #### Example
 
+1. Deploying the infrastructure into your AWS account:
 ```
 docker run \
     -v /var/run/docker.sock:/var/run/docker.sock \
-    --env-file .env.aws \
+    --env-file .env \
     ghcr.io/pogzyb/tourist-deploy:latest \
     apply \
     -b tourist-statefile \
     -k SeCretTK3y
 ```
 
-Destroying (removing the infrastructure)
+2. Destroying (removing the infrastructure):
 ```
 docker run \
     -v /var/run/docker.sock:/var/run/docker.sock \
-    --env-file .env.aws \
+    --env-file .env \
     ghcr.io/pogzyb/tourist-deploy:latest \
     destroy \
     -b tourist-statefile
