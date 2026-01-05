@@ -23,7 +23,8 @@ app = [
   "beautifulsoup4>=4.14.3",
   "html-to-markdown>=2.11.1",
   "patchright==1.56.0",
-  "pydantic==2.8.0"
+  "pydantic==2.8.0",
+  "xvfbwrapper>=0.2.16"
 ]
 
 [project.scripts]

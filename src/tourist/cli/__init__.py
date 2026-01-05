@@ -1,30 +1,23 @@
 import os
-import subprocess
 
 import typer
 import uvicorn
+from xvfbwrapper import Xvfb
 
 app = typer.Typer()
 
 
 @app.command()
 def serve():
-
-    if not os.path.exists("/tmp/.X99-lock"):
-        print("starting X11")
-        x11_proc = subprocess.Popen(
-            f"Xvfb :99 -screen 0 1280x720x24 -ac -nolisten tcp -nolisten unix",
-            shell=True,
+    with Xvfb(width=1280, height=720, display=99):
+        uvicorn.run(
+            "tourist.app:create_app",
+            host="0.0.0.0",
+            port=int(os.getenv("TOURIST__PORT", 8000)),
+            log_level="debug",
+            factory=True,
+            workers=1,
         )
-
-    uvicorn.run(
-        "tourist.app:create_app",
-        host="0.0.0.0",
-        port=int(os.getenv("TOURIST__PORT", 8000)),
-        log_level="debug",
-        factory=True,
-        workers=1,
-    )
 
 
 def main() -> None:
