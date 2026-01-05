@@ -44,8 +44,8 @@ def temp_dirs():
 
 @asynccontextmanager
 async def chrome(**kws):
-    with temp_dirs() as tmp:
-        user_data_dir, data_path, disk_cache_dir = tmp
+    with temp_dirs() as dirs:
+        user_data_dir, data_path, disk_cache_dir = dirs
         async with async_playwright() as playwright:
             context = await playwright.chromium.launch_persistent_context(
                 user_data_dir,
