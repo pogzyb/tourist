@@ -1,33 +1,35 @@
-from llama_index.core.agent import ReActAgent
-from llama_index.llms.ollama import Ollama
-from llama_index.core.tools import FunctionTool
+import asyncio
 
+from llama_index.llms.ollama import Ollama
+from llama_index.core.agent.workflow import FunctionAgent
 from tourist.client import TouristScraper
 
 
 tourist_scraper = TouristScraper(
-    base_url="http://localhost:8000",
-    x_api_key="supersecret",
+    func_urls="http://localhost:8000",
+    x_api_key="whatever",
 )
 
 
-def search(query: str) -> str:
+async def search(query: str):
     """Search places, items, people, or current events online."""
-    serp_result = tourist_scraper.get_serp(query, max_results=2)
-    return "\n\n".join([r["contents"] for r in serp_result])
+    serp_result = await tourist_scraper.aget_serp(query, search_engine="bing", max_results=2)
+    return serp_result
+ 
+
+async def main():
+    llm = Ollama(model="ministral-3:3b", request_timeout=120.0)
+
+    agent = FunctionAgent(
+        tools=[search],
+        llm=llm,
+        system_prompt="You are a helpful assistant that can search the web for information.",
+        verbose=True,
+    )
+
+    response = await agent.run(user_msg="What's going on with the College Football Playoff?")
+    print(str(response))
 
 
-search_tool = FunctionTool.from_defaults(fn=search)
-
-llm = Ollama(
-    base_url="http://localhost:11434",
-    model="llama3.1:8b",
-    request_timeout=120.0,
-)
-
-agent = ReActAgent.from_tools(
-    [multiply_tool, add_tool, search_tool], llm=llm, verbose=True
-)
-
-results = agent.chat("Give me a summary of the latest news on this NFL season.")
-print(results.response)
+if __name__ == "__main__":
+    asyncio.run(main())
