@@ -39,7 +39,7 @@ class TouristScraper:
 
     async def warmup(self):
         async def _get(url: str):
-            async with httpx.AsyncClient() as client:
+            async with AsyncClient() as client:
                 await client.get(url)
 
         await asyncio.gather(*[_get(urljoin(u, "info/health")) for u in self.func_urls])
