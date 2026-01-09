@@ -39,11 +39,12 @@ def run_tofu(
     x_api_key: str,
     bucket: str,
     prefix: str,
+    num_functions: int,
     region: str,
 ):
     cmd_init = f'tofu init -backend-config="region={region}" -backend-config="bucket={bucket}" -backend-config="key=tourist.tfstate"'
     run_command(cmd_init)
-    cmd_action = f'tofu {action} -var-file="tourist.tfvars" -var="x_api_key={x_api_key}" -var="region={region}" -var="project_name={prefix}"'
+    cmd_action = f'tofu {action} -var-file="tourist.tfvars" -var="x_api_key={x_api_key}" -var="region={region}" -var="project_name={prefix}" -var="num_functions={num_functions}"'
     cmd_action = (
         cmd_action + " -input=false -auto-approve" if action != "plan" else cmd_action
     )
@@ -81,6 +82,12 @@ if __name__ == "__main__":
         help="The value of the X-API-KEY header used to authorize use of the endpoint.",
         default=None,
     )
+    parser.add_argument(
+        "-c",
+        "--count",
+        help="The number of functions to deploy in this region.",
+        default=1,
+    )
     args = parser.parse_args()
 
     if args.action == "apply":
@@ -94,5 +101,10 @@ if __name__ == "__main__":
 
     # Run tofu
     run_tofu(
-        args.action, args.x_api_key, args.state_bucket, args.name_prefix, args.region
+        args.action,
+        args.x_api_key,
+        args.state_bucket,
+        args.name_prefix,
+        args.count,
+        args.region,
     )

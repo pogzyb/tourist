@@ -94,11 +94,14 @@ resource "null_resource" "push_image_to_ecr" {
 ### LAMBDA
 
 module "lambda_function" {
+
+  count = var.num_functions
+
   source = "terraform-aws-modules/lambda/aws"
 
   lambda_role                       = aws_iam_role.lambda_role.arn
   create_role                       = false
-  function_name                     = "${var.project_name}-function"
+  function_name                     = "${var.project_name}-${format("function-%02d", count.index)}"
   description                       = "Handles requests for the Tourist SERP API."
   create_package                    = false
   package_type                      = "Image"

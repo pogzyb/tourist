@@ -29,3 +29,8 @@ variable "memory_size" {
   type    = number
   default = 1024 * 10
 }
+
+variable "num_functions" {
+  type = number
+  default = 1
+}
