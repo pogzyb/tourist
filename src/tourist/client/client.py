@@ -1,4 +1,7 @@
+import asyncio
 import logging
+import itertools
+from urllib.parse import urljoin
 from typing import Literal
 
 from httpx import AsyncClient, Client, HTTPError
@@ -27,11 +30,19 @@ class TouristScraper:
     __metaclass__ = Singleton
 
     def __init__(
-        self, base_url: str, x_api_key: str, version_prefix: str = "/v1"
+        self, func_urls: list[str] | str, x_api_key: str, version_prefix: str = "/v1"
     ) -> None:
-        self.base_url = base_url
+        self.func_urls = func_urls if isinstance(func_urls, list) else [func_urls]
+        self.endpoints = itertools.cycle(self.func_urls)
         self.x_api_key = x_api_key
         self.version_prefix = version_prefix
+
+    async def warmup(self):
+        async def _get(url: str):
+            async with httpx.AsyncClient() as client:
+                await client.get(url)
+
+        await asyncio.gather(*[_get(urljoin(u, "info/health")) for u in self.func_urls])
 
     def _get_serp_uri(self):
         uri = self.version_prefix + ENDPOINT_SERP
@@ -46,7 +57,7 @@ class TouristScraper:
         headers = httpx_kws.pop("headers", {})
         headers["X-API-KEY"] = self.x_api_key
         async with AsyncClient(
-            base_url=self.base_url, headers=headers, timeout=timeout, **httpx_kws
+            base_url=next(self.endpoints), headers=headers, timeout=timeout, **httpx_kws
         ) as client:
             try:
                 response = await client.post(uri, json=body)
@@ -60,7 +71,7 @@ class TouristScraper:
         headers = httpx_kws.pop("headers", {})
         headers["X-API-KEY"] = self.x_api_key
         with Client(
-            base_url=self.base_url, headers=headers, timeout=timeout, **httpx_kws
+            base_url=next(self.endpoints), headers=headers, timeout=timeout, **httpx_kws
         ) as client:
             try:
                 response = client.post(uri, json=body)

@@ -9,10 +9,12 @@ from pathlib import Path
 from urllib.parse import quote_plus
 from typing import Literal
 
+import stamina
 from patchright.async_api import (
     async_playwright,
     Playwright,
     TimeoutError as PlaywrightTimeoutError,
+    Error,
 )
 from html_to_markdown import (
     ConversionOptions,
@@ -115,6 +117,7 @@ async def scrape(url, ctx) -> dict[str, str]:
     }
 
 
+@stamina.retry(on=Error, attempts=2)
 async def get_serp_results(
     search_query: str,
     search_engine: Literal["google", "bing"],
@@ -122,27 +125,36 @@ async def get_serp_results(
     max_results: int = 5,
     **chrome_kws,
 ) -> list[dict[str, str]]:
-    try:
-        serp_results = []
-        handle = create_options_handle(ConversionOptions(hocr_spatial_tables=False))
-        async with chrome(**chrome_kws) as ctx:
-            serp = await scrape(
-                f"https://{search_engine}.com/search?q={quote_plus(search_query)}", ctx
-            )
-            links = get_links_from_serp(serp["html"], search_engine, exclude_hosts)[
-                :max_results
-            ]
-            for task in asyncio.as_completed([scrape(link, ctx) for link in links]):
-                result = await task
+    serp_results = []
+    markdown_handler = create_options_handle(
+        ConversionOptions(hocr_spatial_tables=False)
+    )
+    
+    async with chrome(**chrome_kws) as ctx:
+        serp = await scrape(
+            f"https://{search_engine}.com/search?q={quote_plus(search_query)}", ctx
+        )
+
+        links = get_links_from_serp(serp["html"], search_engine, exclude_hosts)
+
+        tasks = [scrape(link, ctx) for link in links[:max_results]]
+
+        async for task in asyncio.as_completed(tasks):
+            try:
+                if task.exception() is not None:
+                    raise task.exception()
+                result = task.result()
                 html = result.pop("html")
-                result["contents"] = convert_with_handle(html, handle)
+                result["contents"] = convert_with_handle(html, markdown_handler)
                 serp_results.append(result)
-        return serp_results
-    except:
-        logger.exception("Could not get serp results:")
-        return None
+            except:
+                # handle individual scrape exceptions, but @stamina.retry outter exceptions
+                logger.exception("Could not individual extract page:")
+
+    return serp_results
 
 
+@stamina.retry(on=Error, attempts=2)
 async def get_page(url: str, **chrome_kws) -> dict[str, str]:
     async with chrome(**chrome_kws) as ctx:
         result = await scrape(url, ctx)
