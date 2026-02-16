@@ -83,7 +83,7 @@ class TouristScraper:
     async def aget_serp(
         self,
         search_query: str,
-        search_engine: Literal["google", "bing"] = "google",
+        search_engine: Literal["brave", "duckduckgo"] = "brave",
         exclude_hosts: list[str] = [],
         max_results: int = DEFAULT_MAX_RESULTS,
         **httpx_kws,
@@ -99,7 +99,7 @@ class TouristScraper:
     def get_serp(
         self,
         search_query: str,
-        search_engine: Literal["google", "bing"] = "google",
+        search_engine: Literal["brave", "duckduckgo"] = "brave",
         exclude_hosts: list[str] = [],
         max_results: int = DEFAULT_MAX_RESULTS,
         **httpx_kws,

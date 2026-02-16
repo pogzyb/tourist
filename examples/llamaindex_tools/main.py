@@ -13,9 +13,11 @@ tourist_scraper = TouristScraper(
 
 async def search(query: str):
     """Search places, items, people, or current events online."""
-    serp_result = await tourist_scraper.aget_serp(query, search_engine="bing", max_results=2)
+    serp_result = await tourist_scraper.aget_serp(
+        query, search_engine="duckduckgo", max_results=3
+    )
     return serp_result
- 
+
 
 async def main():
     llm = Ollama(model="ministral-3:3b", request_timeout=120.0)
@@ -27,7 +29,9 @@ async def main():
         verbose=True,
     )
 
-    response = await agent.run(user_msg="What's going on with the College Football Playoff?")
+    response = await agent.run(
+        user_msg="Which country has the most medals in the 2026 winter olympics?"
+    )
     print(str(response))
 
 

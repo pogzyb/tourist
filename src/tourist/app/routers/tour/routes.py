@@ -22,7 +22,7 @@ class Page(BaseModel):
 
 class TouristSerpRequest(BaseRequest):
     search_query: str
-    search_engine: Literal["google", "bing"]
+    search_engine: Literal["brave", "duckduckgo"]
     max_results: int = 3
     exclude_hosts: list[str] | None = []
 

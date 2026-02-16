@@ -102,21 +102,23 @@ async def handle_cookie_preferences(page) -> None:
 
 async def scrape(url: str, ctx: "BrowserContext") -> dict[str, str]:
     page = await ctx.new_page()
-    await page.goto(url, wait_until="domcontentloaded")
+    await page.goto(url, wait_until="load")
     await page.wait_for_timeout(DEFAULT_WAIT_MS)
     await handle_cookie_preferences(page)
-    return {
+    await page.keyboard.down("PageDown")
+    scraped_page = {
         "title": await page.title(),
         "html": await page.content(),
         "current_url": page.url,
         "requested_url": url,
     }
+    return scraped_page
 
 
 @stamina.retry(on=Error, attempts=2, wait_initial=2)
 async def get_serp_results(
     search_query: str,
-    search_engine: Literal["google", "bing"],
+    search_engine: Literal["brave", "duckduckgo"],
     exclude_hosts: list[str],
     max_results: int = 5,
     **chrome_kws,
@@ -124,28 +126,39 @@ async def get_serp_results(
 
     serp_results: list[dict[str, str]] = []
 
-    markdown_handler = create_options_handle(
+    md_handler = create_options_handle(
         ConversionOptions(
             hocr_spatial_tables=False,
             skip_images=True,
         )
     )
 
+    if search_engine == "brave":
+        base_se = "search.brave.com"
+        path_se = "search"
+    elif search_engine == "duckduckgo":
+        base_se = "duckduckgo.com"
+        path_se = ""
+    else:
+        logger.error(f"invalid search_engine: {search_engine}")
+        return []
+
     async with chrome(**chrome_kws) as ctx:
 
-        serp_url = f"https://{search_engine}.com/search?q={quote_plus(search_query)}"
+        serp_url = f"https://{base_se}/{path_se}?q={quote_plus(search_query)}"
         serp = await scrape(serp_url, ctx)
 
         links = get_links_from_serp(serp["html"], search_engine, exclude_hosts)
+        if not links:
+            logger.warning(f"No links were extracted from {serp_url}")
+
         tasks = [scrape(link, ctx) for link in links[:max_results]]
 
-        async for task in asyncio.as_completed(tasks):
+        for task in asyncio.as_completed(tasks):
             try:
-                if task.exception() is not None:
-                    raise task.exception()
-                result = task.result()
+                result = await task
                 html = result.pop("html")
-                result["contents"] = convert_with_handle(html, markdown_handler)
+                result["contents"] = convert_with_handle(html, md_handler)
                 serp_results.append(result)
             except:
                 # handle individual scrape exceptions, but @stamina.retry outer exceptions
