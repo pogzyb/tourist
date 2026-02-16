@@ -10,7 +10,6 @@ from urllib.parse import quote_plus
 from typing import Literal
 
 import stamina
-from pydantic import BaseModel
 from patchright.async_api import (
     async_playwright,
     Playwright,
@@ -28,7 +27,7 @@ from .utils import get_links_from_serp
 
 logger = logging.getLogger("uvicorn.error")
 
-DEFAULT_WAIT_MS = 1000
+DEFAULT_WAIT_MS = 1500
 
 
 @contextmanager
@@ -98,10 +97,10 @@ async def handle_cookie_preferences(page) -> None:
                 await locator.first.click(delay=10)
         except (PlaywrightTimeoutError, Exception):
             # just return, do not stop the serping
-            ...
+            return
 
 
-async def scrape(url, ctx) -> Page:
+async def scrape(url: str, ctx: "BrowserContext") -> dict[str, str]:
     page = await ctx.new_page()
     await page.goto(url, wait_until="domcontentloaded")
     await page.wait_for_timeout(DEFAULT_WAIT_MS)
@@ -114,7 +113,7 @@ async def scrape(url, ctx) -> Page:
     }
 
 
-@stamina.retry(on=Error, attempts=2)
+@stamina.retry(on=Error, attempts=2, wait_initial=2)
 async def get_serp_results(
     search_query: str,
     search_engine: Literal["google", "bing"],
@@ -133,12 +132,11 @@ async def get_serp_results(
     )
 
     async with chrome(**chrome_kws) as ctx:
-        serp = await scrape(
-            f"https://{search_engine}.com/search?q={quote_plus(search_query)}", ctx
-        )
+
+        serp_url = f"https://{search_engine}.com/search?q={quote_plus(search_query)}"
+        serp = await scrape(serp_url, ctx)
 
         links = get_links_from_serp(serp["html"], search_engine, exclude_hosts)
-
         tasks = [scrape(link, ctx) for link in links[:max_results]]
 
         async for task in asyncio.as_completed(tasks):
@@ -150,7 +148,7 @@ async def get_serp_results(
                 result["contents"] = convert_with_handle(html, markdown_handler)
                 serp_results.append(result)
             except:
-                # handle individual scrape exceptions, but @stamina.retry outter exceptions
+                # handle individual scrape exceptions, but @stamina.retry outer exceptions
                 logger.exception("Could not individual extract page:")
 
     return serp_results
