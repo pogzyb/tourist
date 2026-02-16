@@ -27,7 +27,7 @@ from .utils import get_links_from_serp
 
 logger = logging.getLogger("uvicorn.error")
 
-DEFAULT_WAIT_MS = 1500
+DEFAULT_WAIT_MS = 1100
 
 
 @contextmanager
@@ -66,41 +66,59 @@ async def chrome(**kws):
             await context.close()
 
 
+# CREDIT: https://github.com/dumkydewilde/consentcrawl/blob/main/consentcrawl/crawl.py
 async def handle_cookie_preferences(page) -> None:
     current_dir = Path(__file__).parent.resolve()
     with open(current_dir / "assets/cookie-managers.json", "r") as f:
         cookie_managers = json.load(f)
-    locator = None
+
     for manager in cookie_managers:
-        try:
-            actions = manager.get("actions", [])
-            for action in actions:
-                if action["type"] == "iframe":
-                    if await page.locator(action["value"]).count() > 0:
-                        locator = page.frame_locator(action["value"]).first
-                    else:
-                        continue
-                elif action["type"] == "css-selector":
-                    if await page.locator(action["value"]).first.is_visible():
-                        locator = page.locator(action["value"])
+
+        parent_locator = page
+        locator: "Locator" = None
+
+        actions = manager.get("actions", [])
+        for action in actions:
+            
+            if action["type"] == "iframe":
+                if await parent_locator.locator(action["value"]).count() > 0:
+                    parent_locator = parent_locator.frame_locator(action["value"]).first
+                else:
+                    continue
+
+            elif action["type"] == "css-selector":
+                if await parent_locator.locator(action["value"]).first.is_visible():
+                    locator = parent_locator.locator(action["value"])
+                    break
+
+            elif action["type"] == "css-selector-list":
+                for selector in action["value"]:
+                    if await parent_locator.locator(selector).first.is_visible():
+                        locator = parent_locator.locator(selector)
+                        # manager["selector-list-item"] = selector
                         break
-                elif action["type"] == "css-selector-list":
-                    for selector in action["value"]:
-                        if await page.locator(selector).first.is_visible():
-                            locator = page.locator(selector)
-                            break
-        except:
-            continue
-    if locator is not None:
-        await locator.first.click(delay=10)
+        
+        if locator is not None:
+            try:
+                # explicit wait for navigation as some pages will reload after accepting cookies
+                # async with page.expect_navigation(wait_until="networkidle", timeout=15000):
+                await locator.first.click(delay=10)
+                logger.info(f"Accepted cookie preferences: {manager['name']}")
+                return
+
+            except (PlaywrightTimeoutError, Exception):
+                logger.exception(f"Could not handle cookie preferences: {manager['name']}")
+                continue
 
 
 async def scrape(url: str, ctx: "BrowserContext") -> dict[str, str]:
     page = await ctx.new_page()
-    await page.goto(url, wait_until="domcontentloaded", timeout=30000)
+    await page.goto(url, wait_until="load", timeout=30000)
     await page.wait_for_timeout(DEFAULT_WAIT_MS)
+    await page.mouse.move(333, 888)
+    await page.mouse.wheel(0, -111)
     await handle_cookie_preferences(page)
-    await page.keyboard.down("PageDown")
+    await page.wait_for_timeout(DEFAULT_WAIT_MS)
     scraped_page = {
         "title": await page.title(),
         "html": await page.content(),
