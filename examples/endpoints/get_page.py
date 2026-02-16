@@ -2,7 +2,7 @@ from tourist.client import TouristScraper
 
 
 tourist_scraper = TouristScraper(
-    base_url="https://tbbsgfsuvid4n5xnd6yiwrhyqe0hwufe.lambda-url.us-east-1.on.aws",
+    base_url="https://xxxxxxxxx.lambda-url.us-east-1.on.aws",
     x_api_key="SEECRETTTKEYYY",
 )
 

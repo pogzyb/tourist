@@ -79,27 +79,45 @@ pip install tourist
 For example, create a LangChain Tool for your LLM Agent.
 
 ```
-from tourist.core import TouristScraper
-from langchain_core.tools import tool
+import asyncio
+
+from llama_index.llms.ollama import Ollama
+from llama_index.core.agent.workflow import FunctionAgent
+from tourist.client import TouristScraper
 
 # Assumes you're running locally,
-# change this to your cloud endpoint if you've deployed via terraform.
-scraper = TouristScraper(
-    "http://localhost:8000",
-    x_api_key="doesntmatterlocally",  # authorization secret  
+# change this to your lambda endpoint if you've deployed to your aws account.
+tourist_scraper = TouristScraper(
+    func_urls="http://localhost:8000",
+    x_api_key="whatever",
 )
 
 
-@tool
-def search_tool(query: str) -> str:
-    """
-    A search tool.
-    Useful for when you need to answer questions about current events, people, places, or things.
-    Input should be a search query.
-    """
-    return scraper.get_serp(query, max_results=3):
+async def search_web(query: str):
+    """Search places, items, people, or current events online."""
+    serp_result = await tourist_scraper.aget_serp(
+        query, search_engine="duckduckgo", max_results=3
+    )
+    return serp_result
 
 
-# ... use the tools
+async def main():
+    llm = Ollama(model="ministral-3:3b", request_timeout=120.0)
+
+    agent = FunctionAgent(
+        tools=[search_web],
+        llm=llm,
+        system_prompt="You are a helpful assistant that can search the web for information.",
+        verbose=True,
+    )
+
+    response = await agent.run(
+        user_msg="Which country has the most medals in the 2026 winter olympics?"
+    )
+    print(str(response))
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 
 ```

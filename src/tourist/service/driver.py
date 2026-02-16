@@ -92,17 +92,12 @@ async def handle_cookie_preferences(page) -> None:
         except:
             continue
     if locator is not None:
-        try:
-            async with page.expect_navigation(wait_until="networkidle", timeout=10000):
-                await locator.first.click(delay=10)
-        except (PlaywrightTimeoutError, Exception):
-            # just return, do not stop the serping
-            return
+        await locator.first.click(delay=10)
 
 
 async def scrape(url: str, ctx: "BrowserContext") -> dict[str, str]:
     page = await ctx.new_page()
-    await page.goto(url, wait_until="load")
+    await page.goto(url, wait_until="domcontentloaded", timeout=30000)
     await page.wait_for_timeout(DEFAULT_WAIT_MS)
     await handle_cookie_preferences(page)
     await page.keyboard.down("PageDown")
@@ -154,7 +149,7 @@ async def get_serp_results(
 
         tasks = [scrape(link, ctx) for link in links[:max_results]]
 
-        for task in asyncio.as_completed(tasks):
+        async for task in asyncio.as_completed(tasks):
             try:
                 result = await task
                 html = result.pop("html")
