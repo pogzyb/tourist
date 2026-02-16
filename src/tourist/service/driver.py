@@ -10,6 +10,7 @@ from urllib.parse import quote_plus
 from typing import Literal
 
 import stamina
+from pydantic import BaseModel
 from patchright.async_api import (
     async_playwright,
     Playwright,
@@ -32,16 +33,12 @@ DEFAULT_WAIT_MS = 1000
 
 @contextmanager
 def temp_dirs():
-    user_data_dir = mkdtemp(prefix="chrome-")
-    data_path = mkdtemp(prefix="chrome-")
-    disk_cache_dir = mkdtemp(prefix="chrome-")
-    yield (user_data_dir, data_path, disk_cache_dir)
-    if Path(user_data_dir).is_dir():
-        shutil.rmtree(user_data_dir)
-    if Path(data_path).is_dir():
-        shutil.rmtree(data_path)
-    if Path(disk_cache_dir).is_dir():
-        shutil.rmtree(disk_cache_dir)
+    dirs = [mkdtemp(prefix="chrome-") for _ in range(3)]
+    try:
+        yield dirs
+    finally:
+        for d in dirs:
+            shutil.rmtree(d)
 
 
 @asynccontextmanager
@@ -104,7 +101,7 @@ async def handle_cookie_preferences(page) -> None:
             ...
 
 
-async def scrape(url, ctx) -> dict[str, str]:
+async def scrape(url, ctx) -> Page:
     page = await ctx.new_page()
     await page.goto(url, wait_until="domcontentloaded")
     await page.wait_for_timeout(DEFAULT_WAIT_MS)
@@ -125,11 +122,16 @@ async def get_serp_results(
     max_results: int = 5,
     **chrome_kws,
 ) -> list[dict[str, str]]:
-    serp_results = []
+
+    serp_results: list[dict[str, str]] = []
+
     markdown_handler = create_options_handle(
-        ConversionOptions(hocr_spatial_tables=False)
+        ConversionOptions(
+            hocr_spatial_tables=False,
+            skip_images=True,
+        )
     )
-    
+
     async with chrome(**chrome_kws) as ctx:
         serp = await scrape(
             f"https://{search_engine}.com/search?q={quote_plus(search_query)}", ctx
@@ -159,5 +161,6 @@ async def get_page(url: str, **chrome_kws) -> dict[str, str]:
     async with chrome(**chrome_kws) as ctx:
         result = await scrape(url, ctx)
         html = result.pop("html")
-        result["contents"] = convert(html)
+        options = ConversionOptions(skip_images=True, hocr_spatial_tables=False)
+        result["contents"] = convert(html, options)
         return result
