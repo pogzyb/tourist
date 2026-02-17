@@ -76,7 +76,6 @@ pip install tourist
 ```
 
 ##### LLM Tools
-For example, create a LangChain Tool for your LLM Agent.
 
 ```
 import asyncio
