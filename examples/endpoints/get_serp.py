@@ -8,5 +8,5 @@ tourist_scraper = TouristScraper(
 
 
 if __name__ == "__main__":
-    pages = tourist_scraper.get_serp("Winter olympics medal count 2026", "brave", timeout=300)
+    pages = tourist_scraper.get_serp("Winter olympics medal count 2026", "brave")
     print(pages)
