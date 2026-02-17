@@ -30,16 +30,20 @@ class TouristScraper:
     __metaclass__ = Singleton
 
     def __init__(
-        self, func_urls: list[str] | str, x_api_key: str, version_prefix: str = "/v1"
+        self,
+        func_urls: list[str] | str,
+        x_api_key: str,
+        timeout: float = DEFAULT_TIMEOUT,
     ) -> None:
         self.func_urls = func_urls if isinstance(func_urls, list) else [func_urls]
         self.endpoints = itertools.cycle(self.func_urls)
         self.x_api_key = x_api_key
-        self.version_prefix = version_prefix
+        self.timeout = timeout
+        self.version_prefix = "/v1"
 
     async def warmup(self):
         async def _get(url: str):
-            async with AsyncClient(timeout=120) as client:
+            async with AsyncClient(timeout=self.timeout) as client:
                 await client.get(url)
 
         await asyncio.gather(*[_get(urljoin(u, "info/health")) for u in self.func_urls])
@@ -53,7 +57,7 @@ class TouristScraper:
         return uri
 
     async def _apost(self, uri: str, body: dict = None, **httpx_kws):
-        timeout = httpx_kws.pop("timeout", DEFAULT_TIMEOUT)
+        timeout = httpx_kws.pop("timeout", self.timeout)
         headers = httpx_kws.pop("headers", {})
         headers["X-API-KEY"] = self.x_api_key
         async with AsyncClient(
@@ -67,7 +71,7 @@ class TouristScraper:
                 return {"error": True, "detail": f"There was an HTTPError: {e}"}
 
     def _post(self, uri: str, body: dict = None, **httpx_kws):
-        timeout = httpx_kws.pop("timeout", DEFAULT_TIMEOUT)
+        timeout = httpx_kws.pop("timeout", self.timeout)
         headers = httpx_kws.pop("headers", {})
         headers["X-API-KEY"] = self.x_api_key
         with Client(

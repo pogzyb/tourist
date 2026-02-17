@@ -73,13 +73,11 @@ async def handle_cookie_preferences(page) -> None:
         cookie_managers = json.load(f)
 
     for manager in cookie_managers:
-
         parent_locator = page
         locator: "Locator" = None
 
         actions = manager.get("actions", [])
         for action in actions:
-            
             if action["type"] == "iframe":
                 if await parent_locator.locator(action["value"]).count() > 0:
                     parent_locator = parent_locator.frame_locator(action["value"]).first
@@ -97,7 +95,7 @@ async def handle_cookie_preferences(page) -> None:
                         locator = parent_locator.locator(selector)
                         # manager["selector-list-item"] = selector
                         break
-        
+
         if locator is not None:
             try:
                 # explicit wait for navigation as some pages will reload after accepting cookies
@@ -107,7 +105,9 @@ async def handle_cookie_preferences(page) -> None:
                 return
 
             except (PlaywrightTimeoutError, Exception):
-                logger.exception(f"Could not handle cookie preferences: {manager['name']}")
+                logger.exception(
+                    f"Could not handle cookie preferences: {manager['name']}"
+                )
                 continue
 
 
@@ -136,7 +136,6 @@ async def get_serp_results(
     max_results: int = 5,
     **chrome_kws,
 ) -> list[dict[str, str]]:
-
     serp_results: list[dict[str, str]] = []
 
     md_handler = create_options_handle(
@@ -157,7 +156,6 @@ async def get_serp_results(
         return []
 
     async with chrome(**chrome_kws) as ctx:
-
         serp_url = f"https://{base_se}/{path_se}?q={quote_plus(search_query)}"
         serp = await scrape(serp_url, ctx)
 
