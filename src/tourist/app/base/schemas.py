@@ -10,7 +10,7 @@ class BaseRequest(BaseModel):
 
     @field_validator("timeout")
     @classmethod
-    def timeout_less_than_30(cls, v: float) -> float:
+    def timeout_less_than_900(cls, v: float) -> float:
         if v > 900.0:
             raise ValueError("timeout must be <= 900")
         return v

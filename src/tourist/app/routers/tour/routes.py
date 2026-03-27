@@ -23,14 +23,14 @@ class Page(BaseModel):
 class TouristSerpRequest(BaseRequest):
     search_query: str
     search_engine: Literal["brave", "duckduckgo"]
-    max_results: int = 3
+    max_results: int = 5
     exclude_hosts: list[str] | None = []
 
     @field_validator("max_results")
     @classmethod
     def max_results_reasonable(cls, v: int) -> int:
-        if v > 10 and v < 1:
-            raise ValueError("max_results must be >= 1 and <= 10")
+        if v > 15 and v < 1:
+            raise ValueError("max_results must be >= 1 and <= 15")
         return v
 
 
