@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import shutil
+import random
 from pathlib import Path
 from tempfile import mkdtemp
 from contextlib import asynccontextmanager, contextmanager
@@ -26,8 +27,6 @@ from html_to_markdown import (
 from .utils import get_links_from_serp
 
 logger = logging.getLogger("uvicorn.error")
-
-DEFAULT_WAIT_MS = 1100
 
 
 @contextmanager
@@ -78,6 +77,7 @@ async def handle_cookie_preferences(page) -> None:
 
         actions = manager.get("actions", [])
         for action in actions:
+
             if action["type"] == "iframe":
                 if await parent_locator.locator(action["value"]).count() > 0:
                     parent_locator = parent_locator.frame_locator(action["value"]).first
@@ -113,12 +113,12 @@ async def handle_cookie_preferences(page) -> None:
 
 async def scrape(url: str, ctx: "BrowserContext") -> dict[str, str]:
     page = await ctx.new_page()
-    await page.goto(url, wait_until="load", timeout=30000)
-    await page.wait_for_timeout(DEFAULT_WAIT_MS)
+    await page.goto(url, wait_until="domcontentloaded", timeout=30000)
+    await page.wait_for_timeout(random.randint(1000, 2500))
     await page.mouse.move(333, 888)
     await page.mouse.wheel(0, -111)
     await handle_cookie_preferences(page)
-    await page.wait_for_timeout(DEFAULT_WAIT_MS)
+    await page.wait_for_timeout(random.randint(1000, 2500))
     scraped_page = {
         "title": await page.title(),
         "html": await page.content(),
