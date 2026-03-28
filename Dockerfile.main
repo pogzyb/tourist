@@ -33,7 +33,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   patchright install --no-shell --with-deps chrome && \
   rm -rf /var/lib/apt/lists/*
 
-COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1 /lambda-adapter /opt/extensions/lambda-adapter
+COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:1.0.0 /lambda-adapter /opt/extensions/lambda-adapter
 
 ENV AWS_LWA_ASYNC_INIT=true
 ENV AWS_LWA_READINESS_CHECK_PATH=/info/health
