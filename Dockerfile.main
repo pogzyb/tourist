@@ -40,4 +40,7 @@ ENV AWS_LWA_READINESS_CHECK_PATH=/info/health
 ENV AWS_LWA_ENABLE_COMPRESSION=true
 ENV AWS_LWA_PORT=8000
 
+RUN mkdir -p /tmp/xdg-cache/
+ENV XDG_CACHE_HOME=/tmp/xdg-cache/
+
 ENTRYPOINT [ "tourist" ]
