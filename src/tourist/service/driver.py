@@ -51,6 +51,7 @@ async def chrome(**kws):
                 args=[
                     "--no-sandbox",
                     "--disable-gpu",
+                    "--single-process",
                     "--disable-dev-shm-usage",
                     "--disable-dev-tools",
                     "--deny-permission-prompts",

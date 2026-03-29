@@ -17,6 +17,7 @@ def serve():
             display=99,
             tempdir=tempdir,
             environ=os.environ,
+            set_xdg_session_type=True,
         ):
             uvicorn.run(
                 "tourist.app:create_app",
