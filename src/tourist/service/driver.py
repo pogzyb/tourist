@@ -11,17 +11,11 @@ from urllib.parse import quote_plus
 from typing import Literal
 
 import stamina
+from html_to_markdown import ConversionOptions, convert
 from patchright.async_api import (
     async_playwright,
     Playwright,
     TimeoutError as PlaywrightTimeoutError,
-    Error,
-)
-from html_to_markdown import (
-    ConversionOptions,
-    convert_with_handle,
-    create_options_handle,
-    convert,
 )
 
 from .utils import get_links_from_serp
@@ -51,11 +45,11 @@ async def chrome(**kws):
                 args=[
                     "--no-sandbox",
                     "--disable-gpu",
-                    "--single-process",
                     "--disable-dev-shm-usage",
                     "--disable-dev-tools",
                     "--deny-permission-prompts",
                     "--no-zygote",
+                    "--renderer-process-limit=2",
                     f"--data-path={data_path}",
                     f"--disk-cache-dir={disk_cache_dir}",
                     "--ignore-certificate-errors",
@@ -78,18 +72,15 @@ async def handle_cookie_preferences(page) -> None:
 
         actions = manager.get("actions", [])
         for action in actions:
-
             if action["type"] == "iframe":
                 if await parent_locator.locator(action["value"]).count() > 0:
                     parent_locator = parent_locator.frame_locator(action["value"]).first
                 else:
                     continue
-
             elif action["type"] == "css-selector":
                 if await parent_locator.locator(action["value"]).first.is_visible():
                     locator = parent_locator.locator(action["value"])
                     break
-
             elif action["type"] == "css-selector-list":
                 for selector in action["value"]:
                     if await parent_locator.locator(selector).first.is_visible():
@@ -112,24 +103,35 @@ async def handle_cookie_preferences(page) -> None:
                 continue
 
 
+@stamina.retry(on=PlaywrightTimeoutError, attempts=2, wait_initial=0.5)
 async def scrape(url: str, ctx: "BrowserContext") -> dict[str, str]:
-    page = await ctx.new_page()
-    await page.goto(url, wait_until="domcontentloaded", timeout=30000)
-    await page.wait_for_timeout(random.randint(1000, 2500))
-    await page.mouse.move(333, 888)
-    await page.mouse.wheel(0, -111)
-    await handle_cookie_preferences(page)
-    await page.wait_for_timeout(random.randint(1000, 2500))
-    scraped_page = {
-        "title": await page.title(),
-        "html": await page.content(),
-        "current_url": page.url,
-        "requested_url": url,
-    }
-    return scraped_page
+    try:
+        page = await ctx.new_page()
+        await page.route(
+            "**/*",
+            lambda route: route.abort()
+            if route.request.resource_type == "image"
+            else route.continue_(),
+        )
+        await page.goto(url, wait_until="domcontentloaded", timeout=30000)
+        await page.mouse.move(333, 888)
+        await page.mouse.wheel(0, -111)
+        await handle_cookie_preferences(page)
+        await page.wait_for_timeout(random.randint(1000, 2500))
+        await page.screenshot(path=f"/tmp/screenshots/{random.randint(0, 100)}.png")
+        scraped_page = {
+            "title": await page.title(),
+            "html": await page.content(),
+            "current_url": page.url,
+            "requested_url": url,
+        }
+        return scraped_page
+    except PlaywrightTimeoutError as e:
+        raise e
+    finally:
+        await page.close()
 
 
-@stamina.retry(on=Error, attempts=2, wait_initial=2)
 async def get_serp_results(
     search_query: str,
     search_engine: Literal["brave", "duckduckgo"],
@@ -138,14 +140,6 @@ async def get_serp_results(
     **chrome_kws,
 ) -> list[dict[str, str]]:
     serp_results: list[dict[str, str]] = []
-
-    md_handler = create_options_handle(
-        ConversionOptions(
-            hocr_spatial_tables=False,
-            skip_images=True,
-        )
-    )
-
     if search_engine == "brave":
         base_se = "search.brave.com"
         path_se = "search"
@@ -155,35 +149,29 @@ async def get_serp_results(
     else:
         logger.error(f"invalid search_engine: {search_engine}")
         return []
-
     async with chrome(**chrome_kws) as ctx:
         serp_url = f"https://{base_se}/{path_se}?q={quote_plus(search_query)}"
         serp = await scrape(serp_url, ctx)
-
         links = get_links_from_serp(serp["html"], search_engine, exclude_hosts)
         if not links:
             logger.warning(f"No links were extracted from {serp_url}")
-
         tasks = [scrape(link, ctx) for link in links[:max_results]]
-
         async for task in asyncio.as_completed(tasks):
             try:
                 result = await task
                 html = result.pop("html")
-                result["contents"] = convert_with_handle(html, md_handler)
+                result["contents"] = convert(html, ConversionOptions(skip_images=True)).get("content")
                 serp_results.append(result)
             except:
                 # handle individual scrape exceptions, but @stamina.retry outer exceptions
                 logger.exception("Could not individual extract page:")
-
     return serp_results
 
 
-@stamina.retry(on=Error, attempts=2)
 async def get_page(url: str, **chrome_kws) -> dict[str, str]:
     async with chrome(**chrome_kws) as ctx:
         result = await scrape(url, ctx)
         html = result.pop("html")
-        options = ConversionOptions(skip_images=True, hocr_spatial_tables=False)
-        result["contents"] = convert(html, options)
+        options = ConversionOptions(skip_images=True)
+        result["contents"] = convert(html, options).get("content")
         return result
