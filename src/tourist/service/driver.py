@@ -118,7 +118,6 @@ async def scrape(url: str, ctx: "BrowserContext") -> dict[str, str]:
         await page.mouse.wheel(0, -111)
         await handle_cookie_preferences(page)
         await page.wait_for_timeout(random.randint(1000, 2500))
-        await page.screenshot(path=f"/tmp/screenshots/{random.randint(0, 100)}.png")
         scraped_page = {
             "title": await page.title(),
             "html": await page.content(),
