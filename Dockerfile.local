@@ -13,6 +13,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     wget \
     python3-tk \
     gnome-screenshot \
+    xvfb \
+    xauth \
   && rm -rf /var/lib/apt/lists/*
 RUN pip install patchright && patchright install --no-shell --with-deps chrome
 

@@ -2,97 +2,22 @@ import asyncio
 import json
 import logging
 import random
-import shlex
 import shutil
-import subprocess
 from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
-from tempfile import TemporaryDirectory, mkdtemp
+from tempfile import mkdtemp
 from typing import Literal
 from urllib.parse import quote_plus
 
-import stamina
 from html_to_markdown import ConversionOptions, convert
 from patchright.async_api import (
     TimeoutError as PlaywrightTimeoutError,
     async_playwright,
 )
-from xvfbwrapper import Xvfb
 
 from .utils import get_links_from_serp
 
 logger = logging.getLogger("uvicorn.error")
-
-
-class Display:
-    _instance: "Display | None" = None
-
-    def __new__(cls, display: int = 99, width: int = 1280, height: int = 720):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
-
-    def __init__(self, display: int = 99, width: int = 1280, height: int = 720):
-        if getattr(self, "_initialized", False):
-            return
-
-        self.display = display
-        self.width = width
-        self.height = height
-        self.xvfb: Xvfb | None = None
-        self._tempdir: TemporaryDirectory | None = None
-        self._initialized = True
-
-    @classmethod
-    def instance(cls, display: int = 99, width: int = 1280, height: int = 720):
-        instance = cls(display=display, width=width, height=height)
-        instance.get_xvfb()
-        return instance
-
-    def _already_running(self) -> bool:
-        return (
-            self.xvfb is not None
-            and self.xvfb.proc is not None
-            and self.xvfb.proc.poll() is None
-        )
-
-    def _cleanup(self) -> None:
-        if self.xvfb is not None:
-            try:
-                self.xvfb.stop()
-            except Exception:
-                logger.exception("Could not stop stale Xvfb instance")
-            finally:
-                self.xvfb = None
-
-        if self._tempdir is not None:
-            self._tempdir.cleanup()
-            self._tempdir = None
-
-    def __enter__(self):
-        self.get_xvfb()
-        return self
-
-    def __exit__(self, exc_type, exc, tb):
-        self.close()
-        return False
-
-    def get_xvfb(self) -> Xvfb:
-        if not self._already_running():
-            self._cleanup()
-            self._tempdir = TemporaryDirectory(prefix="x11-")
-            self.xvfb = Xvfb(
-                width=self.width,
-                height=self.height,
-                display=self.display,
-                tempdir=self._tempdir.name,
-                set_xdg_session_type=True,
-            )
-            self.xvfb.start()
-        return self.xvfb
-
-    def close(self) -> None:
-        self._cleanup()
 
 
 @contextmanager
@@ -107,46 +32,29 @@ def temp_dirs():
 
 @asynccontextmanager
 async def chrome(**kws):
-    with Display.instance(
-        display=kws.pop("display", 99),
-        width=kws.pop("width", 1280),
-        height=kws.pop("height", 720),
-    ) as display:
-        while True:
-            check_xvfb = subprocess.run(
-                shlex.split(f"xdpyinfo -display :{display.display}"),
-                capture_output=True,
-                text=True,
+    with temp_dirs() as dirs:
+        user_data_dir, data_path, disk_cache_dir = dirs
+        async with async_playwright() as playwright:
+            context = await playwright.chromium.launch_persistent_context(
+                user_data_dir,
+                channel="chrome",
+                headless=False,
+                args=[
+                    "--no-sandbox",
+                    "--disable-gpu",
+                    "--disable-dev-shm-usage",
+                    "--disable-dev-tools",
+                    "--deny-permission-prompts",
+                    "--no-zygote",
+                    "--renderer-process-limit=2",
+                    f"--data-path={data_path}",
+                    f"--disk-cache-dir={disk_cache_dir}",
+                    "--ignore-certificate-errors",
+                    "--remote-debugging-port=9222",
+                ],
             )
-            if check_xvfb.returncode != 0:
-                logger.info("Xvfb is not ready, waiting ...")
-                await asyncio.sleep(1)
-                continue
-            break
-
-        with temp_dirs() as dirs:
-            user_data_dir, data_path, disk_cache_dir = dirs
-            async with async_playwright() as playwright:
-                context = await playwright.chromium.launch_persistent_context(
-                    user_data_dir,
-                    channel="chrome",
-                    headless=False,
-                    args=[
-                        "--no-sandbox",
-                        "--disable-gpu",
-                        "--disable-dev-shm-usage",
-                        "--disable-dev-tools",
-                        "--deny-permission-prompts",
-                        "--no-zygote",
-                        "--renderer-process-limit=2",
-                        f"--data-path={data_path}",
-                        f"--disk-cache-dir={disk_cache_dir}",
-                        "--ignore-certificate-errors",
-                        "--remote-debugging-port=9222",
-                    ],
-                )
-                yield context
-                await context.close()
+            yield context
+            await context.close()
 
 
 # CREDIT: https://github.com/dumkydewilde/consentcrawl/blob/main/consentcrawl/crawl.py
@@ -192,7 +100,6 @@ async def handle_cookie_preferences(page) -> None:
                 continue
 
 
-@stamina.retry(on=PlaywrightTimeoutError, attempts=2, wait_initial=0.5)
 async def scrape(url: str, ctx: "BrowserContext") -> dict[str, str]:
     page = None
     try:
@@ -250,10 +157,11 @@ async def get_serp_results(
             try:
                 result = await task
                 html = result.pop("html")
-                result["contents"] = convert(html, ConversionOptions(skip_images=True)).get("content")
+                result["contents"] = convert(
+                    html, ConversionOptions(skip_images=True)
+                ).get("content")
                 serp_results.append(result)
             except:
-                # handle individual scrape exceptions, but @stamina.retry outer exceptions
                 logger.exception("Could not individual extract page:")
     return serp_results
 

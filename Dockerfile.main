@@ -27,6 +27,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     curl \
     wget \
     python3-tk \
+    xvfb \
+    xauth \
     gnome-screenshot && \
   rm -rf /var/lib/apt/lists/* && \
   pip install --no-cache-dir tourist[app]==$TOURIST_VERSION && \
