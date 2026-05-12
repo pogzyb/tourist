@@ -114,7 +114,7 @@ async def scrape(url: str, ctx: "BrowserContext") -> dict[str, str]:
         await page.mouse.move(333, 888)
         await page.mouse.wheel(0, -111)
         await handle_cookie_preferences(page)
-        await page.wait_for_timeout(random.randint(1000, 2500))
+        await page.wait_for_timeout(random.randint(800, 1600))
         scraped_page = {
             "title": await page.title(),
             "html": await page.content(),
@@ -157,9 +157,8 @@ async def get_serp_results(
             try:
                 result = await task
                 html = result.pop("html")
-                result["contents"] = convert(
-                    html, ConversionOptions(skip_images=True)
-                ).get("content")
+                options = ConversionOptions(skip_images=True)
+                result["contents"] = getattr(convert(html, options), "content")
                 serp_results.append(result)
             except:
                 logger.exception("Could not individual extract page:")
@@ -171,5 +170,5 @@ async def get_page(url: str, **chrome_kws) -> dict[str, str]:
         result = await scrape(url, ctx)
         html = result.pop("html")
         options = ConversionOptions(skip_images=True)
-        result["contents"] = convert(html, options).get("content")
+        result["contents"] = getattr(convert(html, options), "content")
         return result
