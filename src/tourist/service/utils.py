@@ -1,6 +1,7 @@
 from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup as bs
+from html_to_markdown import ConversionOptions, convert
 
 
 # TODO/Contribution: this function could be optimized in a few ways.
@@ -37,3 +38,10 @@ def get_links_from_serp(
         unique_links.append(link)
         last_host = host
     return unique_links
+
+
+def to_markdown(html: str) -> str:
+    # TODO: make the conversion options configurable
+    options = ConversionOptions(skip_images=True, autolinks=True, strip_tags=["a"])
+    content = getattr(convert(html, options), "content")
+    return content

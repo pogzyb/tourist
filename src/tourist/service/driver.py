@@ -9,13 +9,12 @@ from tempfile import mkdtemp
 from typing import Literal
 from urllib.parse import quote_plus
 
-from html_to_markdown import ConversionOptions, convert
 from patchright.async_api import (
     TimeoutError as PlaywrightTimeoutError,
     async_playwright,
 )
 
-from .utils import get_links_from_serp
+from .utils import get_links_from_serp, to_markdown
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -157,8 +156,7 @@ async def get_serp_results(
             try:
                 result = await task
                 html = result.pop("html")
-                options = ConversionOptions(skip_images=True)
-                result["contents"] = getattr(convert(html, options), "content")
+                result["contents"] = to_markdown(html)
                 serp_results.append(result)
             except:
                 logger.exception("Could not individual extract page:")
@@ -169,6 +167,5 @@ async def get_page(url: str, **chrome_kws) -> dict[str, str]:
     async with chrome(**chrome_kws) as ctx:
         result = await scrape(url, ctx)
         html = result.pop("html")
-        options = ConversionOptions(skip_images=True)
-        result["contents"] = getattr(convert(html, options), "content")
+        result["contents"] = to_markdown(html)
         return result
