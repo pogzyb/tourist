@@ -24,12 +24,18 @@ app = [
   "html-to-markdown>=3.0.0",
   "patchright>=1.56.0",
   "pydantic>=2.8.0",
-  "xvfbwrapper>=0.2.16",
-  "stamina>=25.2.0"
+]
+mcp = [
+  "fastmcp>=3.2.4",
+  "typer>=0.25.1",
+  "beautifulsoup4>=4.14.3",
+  "html-to-markdown>=3.0.0",
+  "patchright>=1.56.0",
+  "pydantic>=2.8.0",
 ]
 
 [project.scripts]
-tourist = "tourist.cli:main"
+tourist = "tourist.cli:cli"
 
 [project.urls]
 Homepage = "https://github.com/pogzyb/tourist"
