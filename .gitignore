@@ -8,3 +8,4 @@ data/
 scratch/
 .venv/
 .ruff_cache/
+build.txt
