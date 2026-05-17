@@ -1,6 +1,6 @@
 FROM ghcr.io/opentofu/opentofu:minimal AS tofu
 
-FROM alpine:3.20
+FROM python:3.13-alpine
 
 ARG CREATED
 ARG TOURIST_VERSION
@@ -19,12 +19,17 @@ LABEL org.opencontainers.image.licenses="MIT"
 
 COPY --from=tofu /usr/local/bin/tofu /usr/local/bin/tofu
 
-RUN apk add --no-cache git aws-cli docker openrc
+RUN apk update && \
+    apk add --no-cache \
+    curl \
+    git \
+    aws-cli \
+    docker \
+    openrc && \
+    pip install --no-cache-dir azure-cli typer
 
-WORKDIR /tf
-COPY tf/ .
-
-RUN chmod u+x push-ecr.sh
+WORKDIR /tourist
+COPY . .
 
 COPY deploy.py /usr/local/bin/deploy.py
 RUN chmod u+x /usr/local/bin/deploy.py

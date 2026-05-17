@@ -1,14 +1,27 @@
 #!/usr/bin/env python3
 
-import argparse
+import os
 import shlex
 import subprocess
 import sys
 from textwrap import dedent
-from typing import Literal
+from typing import Annotated, Literal, Any
+
+import typer
+
+app = typer.Typer()
+
+aws_app = typer.Typer()
+azure_app = typer.Typer()
+
+app.add_typer(aws_app, name="aws", help="Deploy tourist to AWS Lambda.")
+app.add_typer(azure_app, name="azure", help="Deploy tourist to Azure Container Apps.")
 
 
-def run_command(cmd: str):
+def run_command(cmd: str, extra_env: dict[str, Any] | None = None):
+    env = os.environ
+    if extra_env:
+        env.update(env)
     process = subprocess.Popen(
         cmd,
         stdout=subprocess.PIPE,
@@ -17,6 +30,7 @@ def run_command(cmd: str):
         bufsize=1,
         universal_newlines=True,
         shell=True,
+        env=env,
     )
     for line in process.stdout:
         print(f">>> {line.strip()}")
@@ -34,77 +48,119 @@ def docker_pull():
     run_command("docker pull ghcr.io/pogzyb/tourist:latest")
 
 
-def run_tofu(
-    action: Literal["apply", "plan", "destroy"],
-    x_api_key: str,
-    bucket: str,
-    prefix: str,
-    num_functions: int,
-    region: str,
+@aws_app.command("deploy")
+def aws_deploy(
+    state_bucket: Annotated[str, typer.Option()],
+    region: Annotated[str, typer.Option()],
+    x_api_key: Annotated[str, typer.Option()],
+    mode: Annotated[str, typer.Option()],
+    name_prefix: Annotated[str, typer.Option()] = "tourist",
+    count: Annotated[int, typer.Option()] = 1,
+    plan: Annotated[bool, typer.Option()] = False,
 ):
-    cmd_init = f'tofu init -backend-config="region={region}" -backend-config="bucket={bucket}" -backend-config="key=tourist.tfstate"'
+    docker_pull()
+    cmd_init = f"""\
+tofu -chdir=aws init \
+    -backend-config="region={region}" \
+    -backend-config="bucket={state_bucket}" \
+    -backend-config="key=tourist.tfstate"
+"""
     run_command(cmd_init)
-    cmd_action = f'tofu {action} -var-file="tourist.tfvars" -var="x_api_key={x_api_key}" -var="region={region}" -var="project_name={prefix}" -var="num_functions={num_functions}"'
-    cmd_action = (
-        cmd_action + " -input=false -auto-approve" if action != "plan" else cmd_action
-    )
+    action = "plan" if plan else "apply"
+    cmd_action = f"""\
+tofu -chdir=aws {action} \
+    -var-file="tourist.tfvars" \
+    -var="x_api_key={x_api_key}" \
+    -var="region={region}" \
+    -var="project_name={name_prefix}" \
+    -var="num_functions={count}" \
+    -var="mode={mode}" \
+    -auto-approve -input=false
+"""
+    run_command(cmd_action)
+
+
+@aws_app.command("destroy")
+def aws_destroy(
+    state_bucket: Annotated[str, typer.Option()],
+):
+    cmd_init = f"""\
+tofu -chdir=aws init \
+    -backend-config="region={region}" \
+    -backend-config="bucket={state_bucket}" \
+    -backend-config="key=tourist.tfstate"
+"""
+    run_command(cmd_init)
+    cmd_action = f"""\
+tofu -chdir=aws destroy \
+    -var-file="tourist.tfvars" \
+    -auto-approve -input=false
+"""
+    run_command(cmd_action)
+
+
+@azure_app.command("deploy")
+def azure_deploy(
+    tofu_resource_group: Annotated[str, typer.Option()],
+    tofu_storage_account_name: Annotated[str, typer.Option()],
+    tofu_container_name: Annotated[str, typer.Option()],
+    x_api_key: Annotated[str, typer.Option()],
+    mode: Annotated[str, typer.Option()],
+    name_prefix: Annotated[str, typer.Option()] = "tourist",
+    plan: Annotated[bool, typer.Option()] = False,
+):
+    docker_pull()
+    run_command("tofu -chdir=azure fmt")
+    cmd_init = f"""\
+tofu -chdir=azure init \
+    -backend-config="resource_group_name={tofu_resource_group}" \
+    -backend-config="storage_account_name={tofu_storage_account_name}" \
+    -backend-config="container_name={tofu_container_name}" \
+    -backend-config="key=tourist.tfstate"
+    """
+    run_command(cmd_init)
+
+    action = "plan" if plan else "apply"
+    env = {
+        "TF_VAR_ARM_CLIENT_ID": os.getenv("ARM_CLIENT_ID"),
+        "TF_VAR_ARM_CLIENT_SECRET": os.getenv("ARM_CLIENT_SECRET"),
+        "TF_VAR_ARM_TENANT_ID": os.getenv("ARM_TENANT_ID"),
+    }
+    cmd_action = f"""\
+tofu -chdir=azure {action} \
+    -var-file="tourist.tfvars" \
+    -var="x_api_key={x_api_key}" \
+    -var="project_name={name_prefix}" \
+    -var="mode={mode}" \
+    -auto-approve -input=false
+    """
+    run_command(cmd_action, env)
+
+
+@azure_app.command("destroy")
+def azure_destroy(
+    tofu_resource_group: Annotated[str, typer.Option()],
+    tofu_storage_account_name: Annotated[str, typer.Option()],
+    tofu_container_name: Annotated[str, typer.Option()],
+):
+    cmd_init = f"""\
+tofu -chdir=azure init \
+    -backend-config="resource_group_name={tofu_resource_group}" \
+    -backend-config="storage_account_name={tofu_storage_account_name}" \
+    -backend-config="container_name={tofu_container_name}" \
+    -backend-config="key=tourist.tfstate"
+    """
+    run_command(cmd_init)
+    cmd_action = f"""\
+tofu -chdir=azure destroy \
+    -var-file="tourist.tfvars" \
+    -var="x_api_key=na" \
+    -var="project_name=na" \
+    -var="mode=na" \
+    -input=false -auto-approve
+    """
     run_command(cmd_action)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Tourist setup script.")
-    parser.add_argument(
-        "action",
-        help="The OpenTofu action to perform.",
-        choices=["apply", "destroy", "plan"],
-    )
-    parser.add_argument(
-        "-b",
-        "--state-bucket",
-        help="This AWS S3 bucket stores the statefile. This should be created in your AWS account as a prerequisite to deploying.",
-        required=True,
-    )
-    parser.add_argument(
-        "-g",
-        "--region",
-        help="The AWS region where to deploy the resources.",
-        default="us-east-1",
-    )
-    parser.add_argument(
-        "-n",
-        "--name-prefix",
-        help="A custom prefix you can add to the name of the infrastructure resources that are created.",
-        default="tourist",
-    )
-    parser.add_argument(
-        "-k",
-        "--x-api-key",
-        help="The value of the X-API-KEY header used to authorize use of the endpoint.",
-        default=None,
-    )
-    parser.add_argument(
-        "-c",
-        "--count",
-        help="The number of functions to deploy in this region.",
-        default=1,
-    )
-    args = parser.parse_args()
-
-    if args.action == "apply":
-        # Check for x-api-key
-        if args.x_api_key is None:
-            raise Exception(
-                "The --x-api-key value is missing. This is required to secure your endpoint."
-            )
-        # Prepare the tourist docker image for the user's ECR repository
-        docker_pull()
-
-    # Run tofu
-    run_tofu(
-        args.action,
-        args.x_api_key,
-        args.state_bucket,
-        args.name_prefix,
-        args.count,
-        args.region,
-    )
+    app()

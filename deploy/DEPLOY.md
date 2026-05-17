@@ -18,38 +18,32 @@ docker run ghcr.io/pogzyb/tourist-deploy:latest --help
 ```
 
 ```
-Tourist setup script.
-
-positional arguments:
-  {apply,destroy,plan}  The OpenTofu action to perform.
-
-options:
-  -h, --help            show this help message and exit
-  -b STATE_BUCKET, --state-bucket STATE_BUCKET
-                        This AWS S3 bucket stores the statefile. This should
-                        be created in your AWS account as a prerequisite to
-                        deploying.
-  -g REGION, --region REGION
-                        The AWS region where to deploy the resources.
-  -n NAME_PREFIX, --name-prefix NAME_PREFIX
-                        A custom prefix you can add to the name of the
-                        infrastructure resources that are created.
-  -k X_API_KEY, --x-api-key X_API_KEY
-                        The value of the X-API-KEY header used to authorize
-                        use of the endpoint.
+ Usage: deploy.py [OPTIONS] COMMAND [ARGS]...                                   
+                                                                                
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --install-completion          Install completion for the current shell.      │
+│ --show-completion             Show completion for the current shell, to copy │
+│                               it or customize the installation.              │
+│ --help                        Show this message and exit.                    │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────╮
+│ aws    Deploy tourist to AWS Lambda.                                         │
+│ azure  Deploy tourist to Azure Container Apps.                               │
+╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
 #### Example
 
-1. Deploying the infrastructure into your AWS account:
+1. Deploying `tourist` in `app` mode into your AWS account:
 ```
 docker run \
     -v /var/run/docker.sock:/var/run/docker.sock \
     --env-file .env \
-    ghcr.io/pogzyb/tourist-deploy:latest \
-    apply \
-    -b tourist-statefile \
-    -k SeCretTK3y
+    ghcr.io/pogzyb/tourist-deploy:latest aws deploy \
+    --state-bucket llmabda-statefile \
+    --region us-east-1 \
+    --mode app \
+    --x-api-key secretKEy123
 ```
 
 2. Destroying (removing the infrastructure):
@@ -57,7 +51,21 @@ docker run \
 docker run \
     -v /var/run/docker.sock:/var/run/docker.sock \
     --env-file .env \
-    ghcr.io/pogzyb/tourist-deploy:latest \
-    destroy \
+    ghcr.io/pogzyb/tourist-deploy:latest aws destroy \
     -b tourist-statefile
+```
+
+---
+
+1. Deploying `tourist` in `mcp` mode into your Azure account:
+```
+docker run \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    --env-file .env \
+    ghcr.io/pogzyb/tourist-deploy:latest azure deploy \
+    --tofu-resource-group "tofu-resource-group" \
+    --tofu-storage-account-name "tofustatemanagment" \
+    --tofu-container-name "statefiles" \
+    --x-api-key "MySEECrTKey" \
+    --mode mcp
 ```

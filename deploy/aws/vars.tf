@@ -2,8 +2,13 @@ variable "x_api_key" {
   type = string
 }
 
-variable "project_name" {
+variable "mode" {
   type = string
+}
+
+variable "project_name" {
+  type    = string
+  default = "tourist"
 }
 
 variable "region" {
@@ -31,6 +36,6 @@ variable "memory_size" {
 }
 
 variable "num_functions" {
-  type = number
+  type    = number
   default = 1
 }
