@@ -1,3 +1,5 @@
+import os
+
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
 from fastmcp.server.middleware import Middleware, MiddlewareContext
@@ -18,39 +20,34 @@ class Page(BaseModel):
 class AuthMiddleware(Middleware):
     async def on_message(self, context: MiddlewareContext, call_next):
         headers = get_http_headers()
-
-        if authorization := headers.get("authorization"):
-            # check bearer token
-            if authorization.lstrip("Bearer ") == os.getenv("X_API_KEY"):
-                result = await call_next(context)
-                return result
-            else:
-                raise ToolError(
-                    "Access denied. Please check your Authorization header."
-                )
+        if secret_key := headers.get("x-api-key") == os.getenv("X_API_KEY"):
+            result = await call_next(context)
+            return result
         else:
-            raise ToolError("Access denied. Please include an Authorization header.")
+            raise ToolError("Access denied. Please check your X-API-KEY header.")
 
 
-async def create_server() -> FastMCP:
-    mcp = FastMCP(
-        "Tourist🤳", host="0.0.0.0", port=8000, version=__version__, stateless_http=True
-    )
+def create_mcp() -> FastMCP:
+    mcp = FastMCP("Tourist🤳", version=__version__)
+    mcp.add_middleware(AuthMiddleware())
 
-    @mcp.custom_route("/info/health", methods=["GET"])
-    async def health_check(request: Request) -> PlainTextResponse:
-        return PlainTextResponse("OK")
+    # TODO: this is not needed right now, but might be useful in the future.
+    # @mcp.custom_route("/health", methods=["GET"])
+    # async def health_check(request: Request) -> PlainTextResponse:
+    #     return PlainTextResponse("OK")
 
     @mcp.tool(
         name="web_search",
-        description="Search the web for information related to the given query. "
-        "Useful when you need more detailed information about a given topic or subject.",
+        title="Web Search",
+        description=(
+            "Search the web. Useful when you need to source information from the internet about a given topic or subject."
+        ),
         tags={"SERP", "web-search"},
         meta={"version": __version__, "author": "tourist"},
     )
     async def web_search(query: str) -> list[Page]:
         if serp_results := await get_serp_results(
-            search_query=query, search_engine="google", max_results=5
+            search_query=query, search_engine="brave", max_results=5, exclude_hosts=["youtube.com"]
         ):
             pages = [
                 Page(url=r["current_url"], contents=r["contents"]) for r in serp_results
@@ -59,6 +56,4 @@ async def create_server() -> FastMCP:
         else:
             raise ToolError("Something went wrong in this Tool Call.")
 
-    mcp.add_middleware(AuthMiddleware())
-
-    return mcp
+    return mcp.http_app(transport="http")
