@@ -1,0 +1,38 @@
+FROM python:3.13-bullseye
+
+ARG TOURIST_VERSION
+ARG CREATED
+ARG REVISION
+ARG MODE=app
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    DISPLAY=:99 \
+    TOURIST_VERSION=$TOURIST_VERSION
+
+LABEL org.opencontainers.image.title="Tourist"
+LABEL org.opencontainers.image.description="An open-source, serverless application for web scraping."
+LABEL org.opencontainers.image.version=$TOURIST_VERSION
+LABEL org.opencontainers.image.authors="pogzyb@umich.edu"
+LABEL org.opencontainers.image.url="https://github.com/pogzyb/tourist"
+LABEL org.opencontainers.image.source="https://github.com/pogzyb/tourist"
+LABEL org.opencontainers.image.documentation="https://github.com/pogzyb/tourist/README.md"
+LABEL org.opencontainers.image.created=$CREATED
+LABEL org.opencontainers.image.revision=$REVISION
+LABEL org.opencontainers.image.licenses="MIT"
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y xauth xvfb && \
+    pip install --no-cache-dir tourist[${MODE}]==${TOURIST_VERSION} && \
+    python -m patchright install --with-deps chrome
+
+COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:1.0.0 /lambda-adapter /opt/extensions/lambda-adapter
+
+ENV AWS_LWA_ASYNC_INIT=true \
+    AWS_LWA_READINESS_CHECK_PATH=/info/health \
+    AWS_LWA_ENABLE_COMPRESSION=true \
+    AWS_LWA_PORT=8000
+
+ENTRYPOINT [ "python", "-m", "tourist" ]

@@ -1,0 +1,31 @@
+FROM mcr.microsoft.com/azure-functions/python:4-python3.13
+
+ARG TOURIST_VERSION
+ARG CREATED
+ARG REVISION
+ARG MODE=mcp
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    DISPLAY=:99 \
+    TOURIST_VERSION=$TOURIST_VERSION
+
+LABEL org.opencontainers.image.title="Tourist"
+LABEL org.opencontainers.image.description="An open-source, serverless application for web scraping."
+LABEL org.opencontainers.image.version=$TOURIST_VERSION
+LABEL org.opencontainers.image.authors="pogzyb@umich.edu"
+LABEL org.opencontainers.image.url="https://github.com/pogzyb/tourist"
+LABEL org.opencontainers.image.source="https://github.com/pogzyb/tourist"
+LABEL org.opencontainers.image.documentation="https://github.com/pogzyb/tourist/README.md"
+LABEL org.opencontainers.image.created=$CREATED
+LABEL org.opencontainers.image.revision=$REVISION
+LABEL org.opencontainers.image.licenses="MIT"
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y build-essential && \
+    pip install --no-cache-dir .[${MODE}] && \
+    python -m patchright install --with-deps chrome
+
+ENTRYPOINT [ "python", "-m", "tourist" ]
