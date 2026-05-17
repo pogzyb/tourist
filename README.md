@@ -21,7 +21,7 @@ Tourist has both Service and Client components. The Service (HTTP API) handles r
 > [!TIP]  
 > Docker is recommended for running Tourist locally to handle dependencies for headless browsing.
 
-1. `docker run -e X_API_KEY="whatever" -p 8000:8000 ghcr.io/pogzyb/tourist:latest`
+1. `docker run -e X_API_KEY="whatever" -p 8000:8000 ghcr.io/pogzyb/tourist:latest app` 
 
 If the service came up correctly, you should see:
 ```
@@ -33,12 +33,16 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 
 Check the docs at `http://localhost:8000/docs`
 
-### AWS deployment (for real...)
+### 🆕 MCP mode available with Azure deployment
+
+1. `docker run -e X_API_KEY="whatever" -p 8000:8000 ghcr.io/pogzyb/tourist:latest mcp` 
+
+### AWS deployment
 
 Prerequisites:
 1. AWS Account and Credentials
-2. S3 Bucket for storing an OpenTofu statefile
-3. Docker Daemon
+2. S3 Bucket for managing an OpenTofu statefile
+3. Docker 
 
 Read about the deployment container in the [deploy/](./deploy/DEPLOY.md) folder.
 
@@ -48,10 +52,32 @@ Example deployment command:
 docker run \
     -v /var/run/docker.sock:/var/run/docker.sock \
     --env-file .env \
-    ghcr.io/pogzyb/tourist-deploy:latest \
-    apply \
-    -b tourist-statefile \
-    -k SeCretTK3y
+    ghcr.io/pogzyb/tourist-deploy:latest aws deploy \
+    --state-bucket llmabda-statefile \
+    --region us-east-1 \
+    --mode app \
+    --x-api-key SeCretTK3y
+```
+
+Use your endpoint: `https://xxxxxxxx.lambda-url.us-east-1.on.aws` (available the deployment outputs)
+
+### 🆕 Azure deployment
+
+Prerequisites:
+1. Azure Account and Credentials (ARM_CLIENT_ID, ARM_CLIENT_SECRET, ARM_TENANT_ID, and ARM_SUBSCRIPTION_ID)
+2. A resource group, storage account, and storage container for managing an OpenTofu statefile
+3. Docker
+
+```
+docker run \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    --env-file .env \
+    ghcr.io/pogzyb/tourist-deploy:latest azure deploy \
+    --tofu-resource-group "tofu-resource-group" \
+    --tofu-storage-account-name "tofustatemanagment" \
+    --tofu-container-name "statefiles" \
+    --x-api-key "MyS3creTkeey" \
+    --mode mcp
 ```
 
 Use your endpoint: `https://xxxxxxxx.lambda-url.us-east-1.on.aws` (available the deployment outputs)
