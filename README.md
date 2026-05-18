@@ -80,7 +80,7 @@ docker run \
     --mode mcp
 ```
 
-Use your endpoint: `https://xxxxxxxx.lambda-url.us-east-1.on.aws` (available the deployment outputs)
+Use your endpoint: `https://tourist.xxxxxxxx.eastus.azurecontainerapps.io` (available the deployment outputs)
 
 > [!WARNING]  
 > Tourist uses serverless infrastructure to keep costs extremely low; however these costs will not be $0.00 depending on how heavily you use your API.
