@@ -14,18 +14,47 @@ jobs:
         needs: pypi-publish
         steps:
             - name: Wait for PyPi index refresh
-              run: sleep 30s
-    ghcr-publish-tourist:
+              run: sleep 60s
+    ghcr-publish-tourist-aws-app:
         uses: pogzyb/tourist/.github/workflows/ghcr.yml@main
         needs: [pypi-publish, pause]
         with:
             context: .
-            dockerfile: Dockerfile.main
+            dockerfile: Dockerfile.aws
             username: ${{ github.actor }}
-            image-name: ${{ github.repository }}
+            image-name: ${{ github.repository }}-aws-app
             image-tag: ${{ github.event.release.tag_name }}
             revision: ${{ github.sha }}
             created: ${{ github.event.release.created_at }}
+            mode: app
+        secrets:
+            gh-token: ${{ secrets.GITHUB_TOKEN }}
+    ghcr-publish-tourist-azure-app:
+        uses: pogzyb/tourist/.github/workflows/ghcr.yml@main
+        needs: [pypi-publish, pause]
+        with:
+            context: .
+            dockerfile: Dockerfile.azure
+            username: ${{ github.actor }}
+            image-name: ${{ github.repository }}-azure-app
+            image-tag: ${{ github.event.release.tag_name }}
+            revision: ${{ github.sha }}
+            created: ${{ github.event.release.created_at }}
+            mode: app
+        secrets:
+            gh-token: ${{ secrets.GITHUB_TOKEN }}
+    ghcr-publish-tourist-azure-mcp:
+        uses: pogzyb/tourist/.github/workflows/ghcr.yml@main
+        needs: [pypi-publish, pause]
+        with:
+            context: .
+            dockerfile: Dockerfile.azure
+            username: ${{ github.actor }}
+            image-name: ${{ github.repository }}-azure-mcp
+            image-tag: ${{ github.event.release.tag_name }}
+            revision: ${{ github.sha }}
+            created: ${{ github.event.release.created_at }}
+            mode: mcp
         secrets:
             gh-token: ${{ secrets.GITHUB_TOKEN }}
     ghcr-publish-tourist-deploy:
@@ -40,3 +69,4 @@ jobs:
             created: ${{ github.event.release.created_at }}
         secrets:
             gh-token: ${{ secrets.GITHUB_TOKEN }}
+    

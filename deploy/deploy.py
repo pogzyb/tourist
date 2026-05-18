@@ -44,8 +44,10 @@ def run_command(cmd: str, extra_env: dict[str, Any] | None = None):
         raise Exception(f"Command '{cmd}' failed with exit code {return_code}")
 
 
-def docker_pull():
-    run_command("docker pull ghcr.io/pogzyb/tourist:latest")
+def docker_pull(provider: str, mode: str):
+    if provider == "aws" and mode == "mcp":
+        raise Exception("MCP mode is not supported for AWS deployment.")
+    run_command(f"docker pull ghcr.io/pogzyb/tourist-{provider}-${mode}:latest")
 
 
 @aws_app.command("deploy")
@@ -58,7 +60,7 @@ def aws_deploy(
     count: Annotated[int, typer.Option()] = 1,
     plan: Annotated[bool, typer.Option()] = False,
 ):
-    docker_pull()
+    docker_pull("aws", mode)
     cmd_init = f"""\
 tofu -chdir=aws init \
     -backend-config="region={region}" \
@@ -109,7 +111,7 @@ def azure_deploy(
     name_prefix: Annotated[str, typer.Option()] = "tourist",
     plan: Annotated[bool, typer.Option()] = False,
 ):
-    docker_pull()
+    docker_pull("azure", mode)
     run_command("tofu -chdir=azure fmt")
     cmd_init = f"""\
 tofu -chdir=azure init \

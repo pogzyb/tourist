@@ -2,7 +2,12 @@ examples/
 tests/
 Makefile
 Dockerfile.sam
+Dockerfile.aws
+Dockerfile.azure
+Dockerfile.local
+deploy/
 docker-compose.yml
 terraform/
 data/
 scratch/
+.venv/

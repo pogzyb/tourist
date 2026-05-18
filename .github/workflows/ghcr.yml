@@ -24,6 +24,9 @@ on:
       created:
         required: true
         type: string
+      mode:
+        required: false
+        type: string
     secrets:
       gh-token:
         required: true
@@ -71,4 +74,5 @@ jobs:
             REVISION=${{ inputs.revision }}
             CREATED=${{ inputs.created }}
             TOURIST_VERSION=${{ inputs.image-tag }}
+            MODE=${{ inputs.mode || 'deploy' }}
           file: ${{ inputs.dockerfile }}
