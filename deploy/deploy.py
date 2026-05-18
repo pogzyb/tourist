@@ -47,7 +47,7 @@ def run_command(cmd: str, extra_env: dict[str, Any] | None = None):
 def docker_pull(provider: str, mode: str):
     if provider == "aws" and mode == "mcp":
         raise Exception("MCP mode is not supported for AWS deployment.")
-    run_command(f"docker pull ghcr.io/pogzyb/tourist-{provider}-${mode}:latest")
+    run_command(f"docker pull ghcr.io/pogzyb/tourist-{provider}-{mode}:latest")
 
 
 @aws_app.command("deploy")
