@@ -114,7 +114,8 @@ resource "azurerm_container_app" "app" {
 
   template {
     container {
-      command = [var.mode]
+      command = []
+      args = [ var.mode ]
       cpu     = 2
       image   = "${azurerm_container_registry.cr.login_server}/tourist:${var.image_tag}"
       memory  = "4Gi"
